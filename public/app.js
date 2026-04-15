@@ -476,18 +476,18 @@ function renderChart(result, type) {
   const textColor = dark ? '#94a3b8' : '#374151';
 
   Plotly.react(elemId, traces, {
-    margin: { t: 10, r: 10, b: 40, l: 70 },
+    margin: { t: 10, r: 10, b: 60, l: 20 },
     paper_bgcolor: paperBg,
     plot_bgcolor:  plotBg,
     font: { color: textColor },
     xaxis: { title: 'Age', fixedrange: false, gridcolor: gridColor, zerolinecolor: gridColor },
     yaxis: {
-      title: isReal ? 'Portfolio (today\'s $)' : 'Portfolio (nominal $)',
       tickformat: '$,.0f',
+      automargin: true,
       gridcolor: gridColor,
       zerolinecolor: gridColor,
     },
-    legend: { orientation: 'h', y: -0.15, font: { color: textColor } },
+    legend: { orientation: 'h', y: -0.2, font: { color: textColor }, xanchor: 'center', x: 0.5 },
     hovermode: 'x unified',
     shapes: [{
       type: 'line', x0: retAge, x1: retAge, y0: 0, y1: 1,
