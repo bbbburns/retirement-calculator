@@ -517,4 +517,94 @@ body {
   font-size: 11px;
   color: var(--text-muted);
   text-align: center;
+  line-height: 1.6;
+}
+
+/* Contribution allocation hint */
+.contribution-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: -6px 0 8px;
+  min-height: 16px;
+}
+.contribution-hint.over { color: #d97706; }
+
+/* Loading state */
+#output.is-loading .metric-card .value {
+  opacity: 0.4;
+}
+#output.is-loading #chart-nominal,
+#output.is-loading #chart-real {
+  opacity: 0.5;
+}
+
+/* ============================================================
+   Mobile / narrow viewport (≤ 700px)
+   ============================================================ */
+@media (max-width: 700px) {
+  body {
+    height: auto;
+    overflow: auto;
+  }
+
+  #app {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  #scenario-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  #scenario-name-display { display: none; }
+
+  #scenario-bar select { flex: 1; min-width: 0; }
+
+  #main {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  #sidebar {
+    width: 100%;
+    overflow: visible;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 12px 6px;
+  }
+
+  #output {
+    overflow: visible;
+    padding: 10px 10px 20px;
+  }
+
+  #metrics {
+    flex-wrap: wrap;
+  }
+
+  .metric-card {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+  }
+
+  .metric-card .value {
+    font-size: 16px;
+  }
+
+  #chart-nominal,
+  #chart-real {
+    min-height: 280px;
+    flex: none;
+    height: 280px;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  #table-container {
+    overflow-x: auto;
+  }
 }

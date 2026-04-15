@@ -165,6 +165,7 @@ function populateInputs(inp) {
 
   renderOneTimeExpenses(inp.one_time_expenses ?? []);
   renderIncomeStreams(inp.retirement_income_streams ?? []);
+  updateContributionHint();
   populating = false;
 }
 
@@ -191,9 +192,29 @@ function updateSliderLabel(id, val) {
 document.querySelectorAll('input[type="range"]').forEach(el => {
   el.addEventListener('input', () => {
     updateSliderLabel(el.id, el.value);
+    updateContributionHint();
     debouncedCalculate();
   });
 });
+
+function updateContributionHint() {
+  const pretax = parseFloat(document.getElementById('pretax_contribution_rate')?.value ?? 0);
+  const roth   = parseFloat(document.getElementById('roth_contribution_rate')?.value ?? 0);
+  const hint   = document.getElementById('contribution-hint');
+  if (!hint) return;
+  const total = (pretax + roth) * 100;
+  const taxable = Math.max(100 - total, 0);
+  if (total > 100) {
+    hint.textContent = `⚠ ${total.toFixed(0)}% allocated — capped at 100%, no taxable contribution`;
+    hint.className = 'contribution-hint over';
+  } else if (taxable > 0) {
+    hint.textContent = `Remaining ${taxable.toFixed(0)}% goes to taxable brokerage`;
+    hint.className = 'contribution-hint';
+  } else {
+    hint.textContent = '100% allocated — no taxable contribution';
+    hint.className = 'contribution-hint';
+  }
+}
 
 document.querySelectorAll('input[type="text"], select:not(#scenario-select)').forEach(el => {
   el.addEventListener('input', () => debouncedCalculate());
@@ -333,6 +354,8 @@ async function calculate() {
     scenarios[activeIdx].inputs = inputs;
     saveToStorage();
   }
+  const outputEl = document.getElementById('output');
+  outputEl.classList.add('is-loading');
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
@@ -346,6 +369,8 @@ async function calculate() {
     renderResult(lastResult);
   } catch (e) {
     console.error('Fetch error', e);
+  } finally {
+    outputEl.classList.remove('is-loading');
   }
 }
 
@@ -373,7 +398,7 @@ function renderMetrics(result) {
     fireAgeEl.textContent = result.retirement_age_actual;
     fireAgeEl.className = 'value ' + (result.retirement_age_actual <= retAge ? 'good' : '');
   } else {
-    fireAgeEl.textContent = 'Never (in window)';
+    fireAgeEl.textContent = 'Not reachable before 80';
     fireAgeEl.className = 'value warn';
   }
 
