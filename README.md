@@ -20,7 +20,8 @@ src/
 public/
   index.html        Single-page UI
   app.js            Input reading, debounced API calls, Plotly rendering, localStorage scenarios
-  style.css         Layout and component styles
+  style.css         Layout and component styles (desktop + mobile ≤700px)
+  how-it-works.html Standalone page documenting all calculation assumptions
 test/
   calc.test.ts      Unit tests: tax, RMD, accumulation, FIRE number, drawdown, end-to-end
   api.test.ts       Integration tests via Hono app.request()
@@ -29,6 +30,15 @@ test/
 **Request flow:** sliders → `app.js` (300ms debounce) → `POST /api/calculate` → Worker computes `ScenarioResult` → Plotly chart + metrics table + year-by-year table.
 
 **No database.** Scenarios are stored in `localStorage`. The Worker is fully stateless.
+
+## UI notes
+
+- **Dark mode** — ☾/☀︎ toggle in the top bar; preference stored in `localStorage` and synced across the main app and How It Works page. Theme is also applied on first load from `prefers-color-scheme`.
+- **Mobile layout** — at ≤700px the sidebar stacks above the output panel, the scenario bar collapses into two rows (selector on top, action buttons below), and metric cards wrap 2-up.
+- **Scenarios** — managed via the top bar dropdown. New, Copy, Rename, Delete. Auto-saved to `localStorage` on every recalculation.
+- **Contribution hint** — live text below the Roth contribution slider shows how savings are split across buckets; warns if pre-tax + Roth exceed 100%.
+- **Loading state** — metrics and chart fade while a recalculation is in-flight.
+- **Disclaimer** — "For planning purposes only — not financial advice" shown in the sidebar footer and on the How It Works page.
 
 ## Development
 

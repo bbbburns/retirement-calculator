@@ -113,10 +113,23 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   background: var(--bg-topbar);
   color: var(--text-topbar);
   flex-shrink: 0;
+}
+
+.sb-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
 }
 
 #scenario-bar select {
@@ -140,17 +153,14 @@ body {
 #scenario-bar button:hover { background: var(--bg-topbar-btn-hover); }
 #scenario-bar button:disabled { opacity: 0.4; cursor: default; }
 
-#scenario-name-display {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-topbar-dim);
-  margin-right: 4px;
-}
 
 #btn-theme {
-  font-size: 16px;
-  padding: 2px 8px;
-  line-height: 1.4;
+  font-size: 20px;
+  width: 36px;
+  line-height: 1.2;
+  text-align: center;
+  padding: 1px 0;
+  flex-shrink: 0;
 }
 
 #how-it-works-link {
@@ -553,14 +563,35 @@ body {
   }
 
   #scenario-bar {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
     padding: 8px 10px;
   }
 
-  #scenario-name-display { display: none; }
+  .sb-primary {
+    gap: 8px;
+  }
 
-  #scenario-bar select { flex: 1; min-width: 0; }
+  .sb-primary #scenario-select {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    padding: 5px 8px;
+  }
+
+  .sb-actions {
+    gap: 5px;
+  }
+
+  .sb-actions button {
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+
+  #how-it-works-link {
+    font-size: 11px;
+  }
 
   #main {
     flex-direction: column;

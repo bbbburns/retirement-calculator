@@ -629,7 +629,6 @@ function populateScenarioSelect() {
     sel.appendChild(opt);
   });
   sel.value = activeIdx;
-  document.getElementById('scenario-name-display').textContent = scenarios[activeIdx]?.name ?? '';
   document.getElementById('btn-delete').disabled = scenarios.length <= 1;
 }
 
@@ -785,7 +784,7 @@ function toggleTheme() {
 
 function updateThemeButton() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.getElementById('btn-theme').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('btn-theme').textContent = isDark ? '\u2600\uFE0E' : '☾';
   document.getElementById('btn-theme').title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 }
 
