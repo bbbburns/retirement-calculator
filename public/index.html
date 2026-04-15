@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retirement Calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <!-- Scenario bar -->
+  <div id="scenario-bar">
+    <span id="scenario-name-display">Base Case</span>
+    <select id="scenario-select"></select>
+    <button id="btn-new">New</button>
+    <button id="btn-copy">Copy</button>
+    <button id="btn-rename">Rename</button>
+    <button id="btn-delete">Delete</button>
+    <div style="flex:1"></div>
+  </div>
+
+  <div id="main">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <h2>Ages</h2>
+      <div class="input-group">
+        <label>Current age <span class="val" id="val-current_age"></span></label>
+        <input type="range" id="current_age" min="20" max="80" step="1">
+      </div>
+      <div class="input-group">
+        <label>Target retirement age <span class="val" id="val-retirement_age"></span></label>
+        <input type="range" id="retirement_age" min="40" max="80" step="1">
+      </div>
+
+      <h2>Accounts (today's dollars)</h2>
+      <div class="input-group">
+        <label>Pre-tax (401k/IRA)</label>
+        <input type="text" id="pretax_accounts" placeholder="$1,000,000">
+      </div>
+      <div class="input-group">
+        <label>Roth</label>
+        <input type="text" id="roth_accounts" placeholder="$0">
+      </div>
+      <div class="input-group">
+        <label>Taxable brokerage</label>
+        <input type="text" id="taxable_accounts" placeholder="$100,000">
+      </div>
+      <div class="input-group">
+        <label>Other assets</label>
+        <input type="text" id="other_assets" placeholder="$0">
+      </div>
+
+      <h2>Income &amp; Savings</h2>
+      <div class="input-group">
+        <label>Annual income</label>
+        <input type="text" id="annual_income" placeholder="$120,000">
+      </div>
+      <div class="input-group">
+        <label>Savings rate <span class="val" id="val-savings_rate"></span></label>
+        <input type="range" id="savings_rate" min="0" max="0.80" step="0.01">
+      </div>
+      <div class="input-group">
+        <label>Pre-tax contribution <span class="val" id="val-pretax_contribution_rate"></span></label>
+        <input type="range" id="pretax_contribution_rate" min="0" max="1" step="0.01">
+      </div>
+      <div class="input-group">
+        <label>Roth contribution <span class="val" id="val-roth_contribution_rate"></span></label>
+        <input type="range" id="roth_contribution_rate" min="0" max="1" step="0.01">
+      </div>
+      <div class="input-group">
+        <label>Salary growth <span class="val" id="val-salary_growth_rate"></span></label>
+        <input type="range" id="salary_growth_rate" min="0" max="0.10" step="0.005">
+      </div>
+
+      <h2>Returns &amp; Inflation</h2>
+      <div class="input-group">
+        <label>Investment return <span class="val" id="val-investment_return_rate"></span></label>
+        <input type="range" id="investment_return_rate" min="0" max="0.15" step="0.005">
+      </div>
+      <div class="input-group">
+        <label>Inflation <span class="val" id="val-inflation_rate"></span></label>
+        <input type="range" id="inflation_rate" min="0" max="0.10" step="0.005">
+      </div>
+
+      <h2>Retirement Spending</h2>
+      <div class="input-group">
+        <label>Desired spending (today's $)</label>
+        <input type="text" id="desired_spending_today_dollars" placeholder="$80,000">
+      </div>
+      <div class="input-group">
+        <label>Healthcare bump (annual)</label>
+        <input type="text" id="healthcare_annual_bump" placeholder="$5,000">
+      </div>
+
+      <div class="list-section">
+        <button class="list-toggle" onclick="toggleList('ote')">▶ One-time expenses</button>
+        <div class="list-items" id="ote-list">
+          <div id="ote-rows"></div>
+          <button class="add-row-btn" onclick="addOneTimeExpense()">+ Add expense</button>
+        </div>
+      </div>
+
+      <div class="list-section">
+        <button class="list-toggle" onclick="toggleList('ris')">▶ Retirement income streams</button>
+        <div class="list-items" id="ris-list">
+          <div id="ris-rows"></div>
+          <button class="add-row-btn" onclick="addIncomeStream()">+ Add stream</button>
+        </div>
+      </div>
+
+      <h2>Social Security</h2>
+      <div class="input-group">
+        <label>Monthly benefit (today's $)</label>
+        <input type="text" id="ss_monthly_benefit" placeholder="$2,000">
+      </div>
+      <div class="input-group">
+        <label>Claiming age <span class="val" id="val-ss_claiming_age"></span></label>
+        <input type="range" id="ss_claiming_age" min="62" max="70" step="1">
+      </div>
+
+      <h2>Tax &amp; Withdrawal</h2>
+      <div class="input-group">
+        <label>Filing status</label>
+        <select id="filing_status">
+          <option value="mfj">Married Filing Jointly</option>
+          <option value="single">Single</option>
+          <option value="hoh">Head of Household</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Withdrawal strategy</label>
+        <select id="withdrawal_strategy">
+          <option value="conventional">Conventional (taxable → pre-tax → Roth)</option>
+          <option value="roth_first">Roth-first (Roth → pre-tax → taxable)</option>
+          <option value="proportional">Proportional</option>
+        </select>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="model_rmds">
+        <label for="model_rmds">Model RMDs (age 73+)</label>
+      </div>
+      <div class="input-group">
+        <label>Safe withdrawal rate <span class="val" id="val-safe_withdrawal_rate"></span></label>
+        <input type="range" id="safe_withdrawal_rate" min="0.02" max="0.08" step="0.001">
+      </div>
+
+      <h2>Monte Carlo</h2>
+      <div class="input-group">
+        <label>Simulations <span class="val" id="val-monte_carlo_simulations"></span></label>
+        <input type="range" id="monte_carlo_simulations" min="100" max="2000" step="100">
+      </div>
+      <div class="input-group">
+        <label>Return volatility (std dev) <span class="val" id="val-monte_carlo_std"></span></label>
+        <input type="range" id="monte_carlo_std" min="0.05" max="0.30" step="0.01">
+      </div>
+
+      <div style="padding:12px 0 4px;font-size:11px;color:#94a3b8;text-align:center;">
+        Tax brackets: 2025 &middot; Update annually
+      </div>
+    </div>
+
+    <!-- Output panel -->
+    <div id="output">
+      <div id="banner" class="banner"></div>
+
+      <!-- Metrics -->
+      <div id="metrics">
+        <div class="metric-card">
+          <div class="label">FIRE Number</div>
+          <div class="value" id="m-fire-number">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">FIRE Age</div>
+          <div class="value" id="m-fire-age">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Max Sustainable Spending</div>
+          <div class="value" id="m-max-spending">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Portfolio at Retirement</div>
+          <div class="value" id="m-portfolio-at-retirement">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Depletion Age</div>
+          <div class="value" id="m-depletion-age">—</div>
+        </div>
+      </div>
+
+      <!-- MC section -->
+      <div id="mc-section">
+        <button id="btn-mc">Run Monte Carlo</button>
+        <div id="mc-result"></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="nominal">Wealth Curve</button>
+        <button class="tab-btn" data-tab="real">Inflation-Adjusted</button>
+        <button class="tab-btn" data-tab="table">Year-by-Year</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-nominal">
+        <div id="chart-nominal"></div>
+      </div>
+      <div class="tab-panel" id="tab-real">
+        <div id="chart-real"></div>
+      </div>
+      <div class="tab-panel" id="tab-table">
+        <div id="table-container">
+          <table id="detail-table">
+            <thead>
+              <tr>
+                <th>Age</th>
+                <th>Portfolio (nominal)</th>
+                <th>Portfolio (real)</th>
+                <th>Spending</th>
+                <th>SS Income</th>
+                <th>Other Income</th>
+                <th>Taxes</th>
+                <th>RMDs</th>
+                <th>Pre-tax</th>
+                <th>Roth</th>
+                <th>Taxable</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h3 id="modal-title">Rename Scenario</h3>
+    <input type="text" id="modal-input" placeholder="Scenario name">
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-actions">
+      <button id="modal-cancel">Cancel</button>
+      <button class="primary" id="modal-confirm">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

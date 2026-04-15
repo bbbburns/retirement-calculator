@@ -1,0 +1,11 @@
+name = "retirement-calculator"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./public"
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
