@@ -469,19 +469,30 @@ function renderChart(result, type) {
     }
   }
 
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const plotBg    = dark ? '#1e293b' : '#ffffff';
+  const paperBg   = dark ? '#1e293b' : '#ffffff';
+  const gridColor = dark ? '#334155' : '#e5e7eb';
+  const textColor = dark ? '#94a3b8' : '#374151';
+
   Plotly.react(elemId, traces, {
     margin: { t: 10, r: 10, b: 40, l: 70 },
-    xaxis: { title: 'Age', fixedrange: false },
+    paper_bgcolor: paperBg,
+    plot_bgcolor:  plotBg,
+    font: { color: textColor },
+    xaxis: { title: 'Age', fixedrange: false, gridcolor: gridColor, zerolinecolor: gridColor },
     yaxis: {
       title: isReal ? 'Portfolio (today\'s $)' : 'Portfolio (nominal $)',
       tickformat: '$,.0f',
+      gridcolor: gridColor,
+      zerolinecolor: gridColor,
     },
-    legend: { orientation: 'h', y: -0.15 },
+    legend: { orientation: 'h', y: -0.15, font: { color: textColor } },
     hovermode: 'x unified',
     shapes: [{
       type: 'line', x0: retAge, x1: retAge, y0: 0, y1: 1,
       xref: 'x', yref: 'paper',
-      line: { color: '#94a3b8', width: 1, dash: 'dot' },
+      line: { color: dark ? '#475569' : '#94a3b8', width: 1, dash: 'dot' },
     }],
   }, { responsive: true });
 }
@@ -723,6 +734,39 @@ function deepClone(obj) {
 }
 
 // ---------------------------------------------------------------------------
+// Dark mode
+// ---------------------------------------------------------------------------
+
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = saved ? saved === 'dark' : prefersDark;
+  if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+})();
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme', 'dark');
+  }
+  updateThemeButton();
+  // Re-render charts with updated paper/plot background
+  if (lastResult) { renderChart(lastResult, 'nominal'); renderChart(lastResult, 'real'); }
+}
+
+function updateThemeButton() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('btn-theme').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('btn-theme').title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+}
+
+document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 
@@ -736,6 +780,7 @@ function boot() {
     activeIdx = 0;
   }
 
+  updateThemeButton();
   populateInputs(scenarios[activeIdx].inputs);
   populateScenarioSelect();
   calculate();

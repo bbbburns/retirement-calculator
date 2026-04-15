@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How It Works — Retirement Calculator</title>
+  <style>
+    :root {
+      --bg:       #f5f5f5;
+      --surface:  #ffffff;
+      --border:   #e2e8f0;
+      --text:     #1a1a1a;
+      --muted:    #64748b;
+      --heading:  #1e293b;
+      --accent:   #3b82f6;
+      --code-bg:  #f1f5f9;
+    }
+    [data-theme="dark"] {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --border:   #334155;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --heading:  #f1f5f9;
+      --accent:   #60a5fa;
+      --code-bg:  #0f172a;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.15s, color 0.15s;
+    }
+    header {
+      background: #1e293b;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    header a:hover { color: #e2e8f0; }
+    header h1 {
+      color: #e2e8f0;
+      font-size: 16px;
+      font-weight: 600;
+      flex: 1;
+    }
+    #btn-theme {
+      background: #334155;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    #btn-theme:hover { background: #475569; }
+
+    main {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--heading);
+      margin: 36px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--border);
+    }
+    h2:first-child { margin-top: 0; }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--heading);
+      margin: 20px 0 6px;
+    }
+    p { margin-bottom: 12px; color: var(--text); }
+    ul, ol { margin: 8px 0 12px 24px; }
+    li { margin-bottom: 4px; }
+    code {
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+    }
+    .formula {
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 10px 0 14px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 10px 0 16px;
+    }
+    th {
+      text-align: left;
+      padding: 6px 10px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      color: var(--heading);
+    }
+    td {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .note {
+      background: var(--code-bg);
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a href="/">&larr; Back to Calculator</a>
+  <h1>How It Works</h1>
+  <button id="btn-theme">🌙</button>
+</header>
+
+<main>
+
+<h2>Overview</h2>
+<p>
+  This calculator models your financial journey in two phases: an <strong>accumulation phase</strong>
+  (working years, growing your portfolio) and a <strong>drawdown phase</strong> (retirement, spending
+  down). All internal math uses <strong>nominal dollars</strong>; inflation-adjusted ("real") values
+  are derived at display time.
+</p>
+<p>
+  At every step the model tracks three separate account buckets — pre-tax (401k/IRA), Roth, and
+  taxable brokerage — and applies 2025 federal income tax brackets to estimate actual after-tax
+  spending power.
+</p>
+
+<h2>Accumulation Phase</h2>
+<p>
+  Starting from your current age and account balances, the model compounds each bucket by your
+  chosen investment return rate each year. Your annual savings contribution is split across
+  buckets according to the pre-tax and Roth contribution rate sliders; the remainder goes to
+  taxable.
+</p>
+<div class="formula">portfolio(year+1) = portfolio(year) × (1 + return_rate)
+                  + annual_income × (1 + salary_growth)^year × savings_rate</div>
+<p>
+  Accumulation runs from your current age to your <em>target</em> retirement age. The chart always
+  splits at the target — the FIRE age marker is shown separately if you could retire earlier.
+</p>
+
+<h2>FIRE Number</h2>
+<p>
+  The FIRE number is the portfolio size that sustains your desired retirement spending indefinitely,
+  accounting for taxes on withdrawals.
+</p>
+<div class="formula">FIRE number  =  portfolio such that:
+  portfolio × SWR − taxes(portfolio × SWR × pretax_fraction) = net_spending
+
+net_spending = desired_spending + healthcare − ss_real − retirement_income_real</div>
+<p>
+  This is solved via binary search (60 iterations, converges to within 0.00001%). The tax term
+  uses the marginal bracket rate on the pre-tax portion of the withdrawal plus 85% of Social
+  Security income (the IRS-taxable fraction).
+</p>
+<p>
+  Social Security and retirement income streams are discounted to today's dollars before being
+  subtracted from net spending:
+</p>
+<div class="formula">ss_real              = annual_ss / (1 + inflation)^(claiming_age − current_age)
+retirement_income_real = amount / (1 + inflation)^(start_age − current_age)</div>
+
+<h2>Earliest FIRE Age</h2>
+<p>
+  The calculator searches year by year through your accumulation to find when your real (inflation-adjusted)
+  portfolio first crosses the FIRE number. At each candidate age the FIRE number is <em>recomputed</em>
+  with that age as the retirement age — this ensures income streams that start after the candidate
+  age are not counted prematurely.
+</p>
+<div class="note">
+  The real portfolio is compared to the real FIRE number. Comparing nominal values to a real
+  FIRE number would make retirement appear reachable years too early.
+</div>
+
+<h2>Drawdown Phase</h2>
+<p>
+  Starting at your target retirement age, the model simulates spending year by year through age 95,
+  tracking all three account buckets.
+</p>
+
+<h3>Spending</h3>
+<p>
+  Desired spending and healthcare costs are inflated each year from your current age:
+</p>
+<div class="formula">spending(age) = (desired_spending + healthcare) × (1 + inflation)^(age − current_age)</div>
+<p>
+  One-time expenses (e.g. a home purchase) are added as a lump sum in the year they occur.
+  Retirement income streams are fixed nominal amounts — they do not inflate, similar to a
+  fixed pension or annuity.
+</p>
+
+<h3>Withdrawal Strategies</h3>
+<p>Three strategies control the order buckets are drawn down:</p>
+<table>
+  <tr><th>Strategy</th><th>Order</th><th>When to use</th></tr>
+  <tr>
+    <td><strong>Conventional</strong></td>
+    <td>Taxable → Pre-tax → Roth</td>
+    <td>Default; preserves tax-free Roth growth longest</td>
+  </tr>
+  <tr>
+    <td><strong>Roth-first</strong></td>
+    <td>Roth → Pre-tax → Taxable</td>
+    <td>Minimizes current-year taxes; useful if in a low bracket early in retirement</td>
+  </tr>
+  <tr>
+    <td><strong>Proportional</strong></td>
+    <td>All buckets pro-rata</td>
+    <td>Smooth tax exposure; approximates Roth conversion ladder</td>
+  </tr>
+</table>
+
+<h3>Tax Gross-Up</h3>
+<p>
+  When withdrawing from pre-tax accounts, you need to withdraw <em>more</em> than you spend
+  to cover the tax bill. The model solves this iteratively (6 rounds of fixed-point refinement):
+</p>
+<div class="formula">gross = net_needed + tax(gross × pretax_fraction + 0.85 × ss_income)
+→ repeat until converged</div>
+
+<h3>Required Minimum Distributions (RMDs)</h3>
+<p>
+  When RMDs are enabled, the IRS Uniform Lifetime Table is used to compute the minimum required
+  withdrawal from your pre-tax accounts starting at age 73 (SECURE 2.0 Act). If the RMD exceeds
+  your spending need, the surplus is re-invested in the taxable account.
+</p>
+
+<h2>Tax Brackets (2025)</h2>
+<p>
+  Federal income tax is computed using 2025 marginal brackets. Filing status affects both the
+  bracket thresholds and the standard deduction.
+</p>
+<table>
+  <tr><th>Rate</th><th>Married Filing Jointly</th><th>Single</th><th>Head of Household</th></tr>
+  <tr><td>10%</td><td>$0 – $23,200</td><td>$0 – $11,600</td><td>$0 – $16,550</td></tr>
+  <tr><td>12%</td><td>$23,200 – $94,300</td><td>$11,600 – $47,150</td><td>$16,550 – $63,100</td></tr>
+  <tr><td>22%</td><td>$94,300 – $201,050</td><td>$47,150 – $100,525</td><td>$63,100 – $100,500</td></tr>
+  <tr><td>24%</td><td>$201,050 – $383,900</td><td>$100,525 – $191,950</td><td>$100,500 – $191,950</td></tr>
+  <tr><td>32%</td><td>$383,900 – $487,450</td><td>$191,950 – $243,725</td><td>$191,950 – $243,700</td></tr>
+  <tr><td>35%</td><td>$487,450 – $731,200</td><td>$243,725 – $609,350</td><td>$243,700 – $609,350</td></tr>
+  <tr><td>37%</td><td>$731,200+</td><td>$609,350+</td><td>$609,350+</td></tr>
+</table>
+<p>Standard deductions: MFJ $30,000 · Single $15,000 · Head of Household $22,500.</p>
+<div class="note">
+  Tax brackets are updated annually. State income taxes are not modeled. Capital gains rates
+  on taxable brokerage withdrawals are also not modeled — all withdrawals are treated as
+  ordinary income, which is conservative.
+</div>
+
+<h2>Social Security</h2>
+<p>
+  The monthly benefit you enter represents your benefit at full retirement age (67 for most
+  people). The claiming age adjusts this by SSA factors:
+</p>
+<table>
+  <tr><th>Claiming Age</th><th>62</th><th>63</th><th>64</th><th>65</th><th>66</th><th>67</th><th>68</th><th>69</th><th>70</th></tr>
+  <tr><td><strong>Factor</strong></td><td>70%</td><td>75%</td><td>80%</td><td>86.7%</td><td>93.3%</td><td>100%</td><td>108%</td><td>116%</td><td>124%</td></tr>
+</table>
+<p>
+  SS income is a fixed nominal amount from claiming age onward. Cost-of-living adjustments (COLA)
+  are not modeled. 85% of SS income is included in taxable income per IRS rules.
+</p>
+
+<h2>Monte Carlo Simulation</h2>
+<p>
+  The Monte Carlo simulation runs hundreds of randomized retirement scenarios to estimate the
+  probability of not outliving your portfolio. Each simulation draws annual returns from a
+  log-normal distribution:
+</p>
+<div class="formula">annual_return = exp(μ + σ × Z) − 1   where Z ~ N(0,1)
+μ = ln(1 + expected_return) − 0.5σ²
+σ = return volatility (std dev slider)</div>
+<p>
+  The chart shows 10th/50th/90th percentile portfolio paths. The success rate is the fraction
+  of simulations where the portfolio survives to age 95.
+</p>
+<div class="note">
+  A common benchmark: the "Trinity Study" found ~96% success for a 30-year retirement with a
+  4% SWR using a 50/50 stock/bond portfolio (historical returns ~7%, volatility ~10–12%).
+</div>
+
+<h2>Key Assumptions &amp; Limitations</h2>
+<ul>
+  <li><strong>Deterministic baseline:</strong> The main chart uses a single fixed return rate. Markets are not deterministic — use Monte Carlo for a range of outcomes.</li>
+  <li><strong>No COLA on SS:</strong> Social Security benefits are not adjusted for inflation in this model, making SS slightly pessimistic over long horizons.</li>
+  <li><strong>No state income tax:</strong> Only federal brackets are applied.</li>
+  <li><strong>No capital gains rate:</strong> Taxable brokerage withdrawals are taxed at ordinary income rates, which overstates the tax burden for long-held investments.</li>
+  <li><strong>No sequence-of-returns risk in the baseline:</strong> A fixed return each year understates risk. Use Monte Carlo to see how bad years early in retirement affect outcomes.</li>
+  <li><strong>Retirement income streams are nominal:</strong> They do not inflate, modeling a fixed payment (e.g. pension, rental income set at today's rate). Adjust the amount upward if you expect COLA.</li>
+  <li><strong>Max simulation age is 95.</strong></li>
+</ul>
+
+</main>
+
+<script>
+  // Sync dark mode with main app
+  (function() {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved ? saved === 'dark' : prefersDark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    function update() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.getElementById('btn-theme').textContent = isDark ? '☀️' : '🌙';
+    }
+    document.getElementById('btn-theme').addEventListener('click', function() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      }
+      update();
+    });
+    update();
+  })();
+</script>
+</body>
+</html>
