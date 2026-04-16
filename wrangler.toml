@@ -9,3 +9,7 @@ directory = "./public"
 [observability.logs]
 enabled = true
 invocation_logs = true
+
+[[routes]]
+pattern = "retire.burns.sh"
+custom_domain = true
