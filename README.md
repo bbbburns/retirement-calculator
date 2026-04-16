@@ -127,3 +127,7 @@ npx vitest run
 | Drawdown | 1 |
 | End-to-end (runScenario) | 4 |
 | API integration | 9 |
+
+## License
+
+MIT — see [LICENSE](LICENSE).

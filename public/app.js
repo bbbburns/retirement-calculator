@@ -644,7 +644,7 @@ function renderCompareCheckboxes() {
   scenarios.forEach((s) => {
     const id = 'cmp-' + s.name.replace(/\W+/g, '_');
     const label = document.createElement('label');
-    label.innerHTML = `<input type="checkbox" id="${id}" value="${s.name.replace(/"/g, '&quot;')}" ${checked.has(s.name) ? 'checked' : ''}> ${s.name}`;
+    label.innerHTML = `<input type="checkbox" id="${id}" value="${escapeHtml(s.name)}" ${checked.has(s.name) ? 'checked' : ''}> ${escapeHtml(s.name)}`;
     box.appendChild(label);
   });
   box.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -1002,7 +1002,8 @@ function decodeQueryToScenario() {
 function importSharedScenarioIfPresent() {
   const shared = decodeQueryToScenario();
   if (!shared) return false;
-  const importName = uniqueName(`Shared: ${shared.name}`);
+  const safeName = (shared.name || '').slice(0, 100).replace(/[/\\:*?"<>|]/g, '_');
+  const importName = uniqueName(`Shared: ${safeName}`);
   shared.inputs.name = importName;
   scenarios.push({ name: importName, inputs: shared.inputs });
   activeIdx = scenarios.length - 1;
