@@ -322,6 +322,54 @@ retirement_income_real = amount / (1 + inflation)^(start_age − current_age)</d
   4% SWR using a 50/50 stock/bond portfolio (historical returns ~7%, volatility ~10–12%).
 </div>
 
+<h2>Default Values &amp; Their Sources</h2>
+<p>
+  The calculator ships with a pre-filled "Base Case" scenario. These defaults are meant to be
+  plausible starting points for a median US household, not prescriptions. Every value is editable.
+</p>
+<table>
+  <tr>
+    <th>Parameter</th>
+    <th>Default</th>
+    <th>Rationale</th>
+  </tr>
+  <tr>
+    <td>Investment return rate</td>
+    <td>7%</td>
+    <td>Approximate long-run annualized real return of a diversified US equity portfolio (S&amp;P 500 historical average ~10% nominal, ~7% after ~3% inflation). Often cited in the Trinity Study and similar research.</td>
+  </tr>
+  <tr>
+    <td>Inflation rate</td>
+    <td>3%</td>
+    <td>US CPI has averaged ~3% over the past century; slightly above the Federal Reserve's 2% long-run target as a conservative buffer.</td>
+  </tr>
+  <tr>
+    <td>Salary growth rate</td>
+    <td>2%</td>
+    <td>Modest nominal wage growth assumption — roughly in line with the Fed's inflation target, implying flat real wages. Adjust upward if you expect career advancement or promotions.</td>
+  </tr>
+  <tr>
+    <td>Safe withdrawal rate</td>
+    <td>4%</td>
+    <td>The "4% rule" originates from Bengen (1994) and the Trinity Study, which found a 4% initial withdrawal (inflation-adjusted annually) survived 30-year retirements ~96% of the time across historical market conditions.</td>
+  </tr>
+  <tr>
+    <td>Monte Carlo volatility</td>
+    <td>15%</td>
+    <td>Approximate annualized standard deviation of a US stock market index fund (historical range ~15–20%). A blended stock/bond portfolio will be lower.</td>
+  </tr>
+  <tr>
+    <td>Social Security benefit</td>
+    <td>$1,800/mo</td>
+    <td>Near the SSA's reported average monthly retired-worker benefit (~$1,700–$1,900 as of 2024). The SSA's <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">my Social Security</a> portal gives your personal estimate.</td>
+  </tr>
+  <tr>
+    <td>Desired spending</td>
+    <td>$65,000/yr</td>
+    <td>Roughly 80% of the $80,000 default income — a common rule of thumb for retirement spending needs.</td>
+  </tr>
+</table>
+
 <h2>Key Assumptions &amp; Limitations</h2>
 <ul>
   <li><strong>Deterministic baseline:</strong> The main chart uses a single fixed return rate. Markets are not deterministic — use Monte Carlo for a range of outcomes.</li>

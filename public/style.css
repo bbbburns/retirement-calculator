@@ -670,6 +670,7 @@ body {
 
   .sb-actions {
     gap: 5px;
+    flex-wrap: wrap;
   }
 
   .sb-actions button {
