@@ -96,10 +96,18 @@ function readInputs() {
   const pretaxFrac  = total$ > 0 ? pretax$ / total$ : 0;
   const rothFrac    = total$ > 0 ? roth$   / total$ : 0;
 
+  const currentAge = sl('current_age');
+  const rawRetAge = sl('retirement_age');
+  if (rawRetAge < currentAge) {
+    showError(`Retirement age (${rawRetAge}) is below current age (${currentAge}) — adjust the sliders.`);
+  } else {
+    hideError();
+  }
+
   return {
     name: scenarios[activeIdx]?.name ?? 'Base Case',
-    current_age: sl('current_age'),
-    retirement_age: sl('retirement_age'),
+    current_age: currentAge,
+    retirement_age: Math.max(rawRetAge, currentAge),
     pretax_accounts: tx('pretax_accounts'),
     roth_accounts: tx('roth_accounts'),
     taxable_accounts: tx('taxable_accounts'),
@@ -285,10 +293,10 @@ function addOneTimeExpenseRow(item, _idx) {
   const row = document.createElement('div');
   row.className = 'list-item';
   row.innerHTML = `
-    <input type="text" placeholder="Age" value="${item.age}" style="max-width:40px">
-    <input type="text" placeholder="Amount">
-    <input type="text" placeholder="Label">
-    <button onclick="this.closest('.list-item').remove(); debouncedCalculate();">&times;</button>
+    <input type="number" placeholder="Age" value="${item.age}" min="20" max="120" step="1" aria-label="Expense age" style="max-width:40px">
+    <input type="text" placeholder="Amount" inputmode="numeric" aria-label="Expense amount">
+    <input type="text" placeholder="Label" aria-label="Expense label">
+    <button onclick="this.closest('.list-item').remove(); debouncedCalculate();" aria-label="Remove expense">&times;</button>
   `;
   row.querySelectorAll('input')[1].value = item.amount ? Math.round(item.amount).toLocaleString() : '';
   row.querySelectorAll('input')[2].value = item.label || '';
@@ -332,13 +340,13 @@ function addIncomeStreamRow(item) {
   row.className = 'ris-item';
   row.innerHTML = `
     <div class="ris-row1">
-      <input type="text" placeholder="Amount ($/yr)" class="ris-amount">
-      <button onclick="this.closest('.ris-item').remove(); debouncedCalculate();">&times;</button>
+      <input type="text" placeholder="Amount ($/yr)" class="ris-amount" inputmode="numeric" aria-label="Annual income amount">
+      <button onclick="this.closest('.ris-item').remove(); debouncedCalculate();" aria-label="Remove income stream">&times;</button>
     </div>
     <div class="ris-row2">
-      <label>From <input type="text" placeholder="65" class="ris-age"></label>
-      <label>To <input type="text" placeholder="95" class="ris-age"></label>
-      <input type="text" placeholder="Label" class="ris-label">
+      <label>From <input type="number" placeholder="65" class="ris-age" min="20" max="120" step="1" aria-label="Income start age"></label>
+      <label>To <input type="number" placeholder="95" class="ris-age" min="20" max="120" step="1" aria-label="Income end age"></label>
+      <input type="text" placeholder="Label" class="ris-label" aria-label="Income stream label">
     </div>
   `;
   row.querySelector('.ris-amount').value = item.amount ? Math.round(item.amount).toLocaleString() : '';
@@ -369,6 +377,17 @@ function debouncedCalculate() {
   calcTimer = setTimeout(calculate, 300);
 }
 
+function showError(msg) {
+  const banner = document.getElementById('error-banner');
+  banner.textContent = msg;
+  banner.hidden = false;
+}
+
+function hideError() {
+  const banner = document.getElementById('error-banner');
+  banner.hidden = true;
+}
+
 async function calculate() {
   const inputs = readInputs();
   if (!populating) {
@@ -384,12 +403,18 @@ async function calculate() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(inputs),
     });
-    if (!res.ok) { console.error('API error', res.status); return; }
+    if (!res.ok) {
+      showError(`Server error (HTTP ${res.status}). Check for out-of-range values.`);
+      console.error('API error', res.status);
+      return;
+    }
+    hideError();
     lastResult = await res.json();
     mcResult = null; // clear stale MC on any input change
     document.getElementById('mc-result').textContent = '';
     renderResult(lastResult);
   } catch (e) {
+    showError('Could not reach the server. Check your connection and try again.');
     console.error('Fetch error', e);
   } finally {
     outputEl.classList.remove('is-loading');
@@ -431,6 +456,7 @@ function renderMetrics(result) {
   } else {
     depEl.textContent = '95+ ✓';
     depEl.className = 'value good';
+    depEl.title = 'Portfolio lasted to age 95, the end of the simulation. It may last longer in reality.';
   }
 }
 
@@ -529,6 +555,7 @@ function renderChart(result, type) {
     font: { color: textColor },
     xaxis: { title: 'Age', fixedrange: false, gridcolor: gridColor, zerolinecolor: gridColor },
     yaxis: {
+      title: isReal ? "Portfolio Value (today's $)" : 'Portfolio Value',
       tickformat: '$,.0f',
       automargin: true,
       gridcolor: gridColor,
@@ -665,12 +692,15 @@ function updateCompareButton() {
 
 function updateCompareStatus() {
   const status = document.getElementById('compare-status');
+  const btn = document.getElementById('btn-compare');
   if (compareDirty && compareResults) {
-    status.textContent = 'Inputs changed since last run — click Compare to refresh.';
+    status.textContent = 'Inputs changed since last run.';
     status.className = 'stale';
+    if (!btn.disabled) btn.textContent = 'Refresh compare';
   } else {
     status.textContent = '';
     status.className = '';
+    if (!btn.disabled) btn.textContent = 'Compare selected';
   }
 }
 
@@ -714,6 +744,7 @@ async function runComparison() {
   compareDirty = false;
   status.textContent = '';
   btn.disabled = false;
+  btn.textContent = 'Compare selected';
   renderCompareTable(compareResults);
 }
 
@@ -1025,8 +1056,8 @@ document.getElementById('btn-share').addEventListener('click', async () => {
     btn.classList.add('copied');
     setTimeout(restore, 1500);
   } catch (e) {
-    // Fallback: show URL in modal for manual copy
-    openModal('Copy this link', url, () => null);
+    // Fallback: show URL in modal pre-selected for manual copy (Ctrl+C / Cmd+C)
+    openModal('Copy this link (Ctrl+C / Cmd+C)', url, () => null);
   }
 });
 

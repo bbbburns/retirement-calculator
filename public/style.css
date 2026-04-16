@@ -63,7 +63,7 @@
   --border-input:  #475569;
 
   --text-body:     #e2e8f0;
-  --text-label:    #cbd5e1;
+  --text-label:    #e2e8f0;
   --text-muted:    #94a3b8;
   --text-heading:  #94a3b8;
   --text-value:    #f1f5f9;
@@ -298,7 +298,8 @@ body {
 }
 .list-item button, .ris-item button {
   background: none; border: none; cursor: pointer;
-  color: #ef4444; font-size: 16px; line-height: 1; padding: 0 2px; flex-shrink: 0;
+  color: #ef4444; font-size: 16px; line-height: 1; padding: 4px 6px; flex-shrink: 0;
+  min-width: 28px; min-height: 28px;
 }
 
 /* Two-line layout for income streams */
@@ -402,6 +403,30 @@ body {
 }
 .banner.info    { background: var(--banner-info-bg);  border: 1px solid var(--banner-info-border);  color: var(--banner-info-text);  display: block; }
 .banner.warning { background: var(--banner-warn-bg); border: 1px solid var(--banner-warn-border); color: var(--banner-warn-text); display: block; }
+
+/* Error banner (validation, API errors) */
+.error-banner {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 6px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+[data-theme="dark"] .error-banner {
+  background: #431407;
+  border-color: #9a3412;
+  color: #fdba74;
+}
+
+/* Help tooltip markers */
+.help {
+  font-size: 0.82em;
+  color: var(--text-muted);
+  cursor: help;
+  font-weight: normal;
+}
 
 /* Tabs */
 .tabs {
@@ -726,5 +751,16 @@ body {
 
   #table-container {
     overflow-x: auto;
+  }
+}
+
+@media (max-width: 500px) {
+  .sb-actions button {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+
+  #how-it-works-link {
+    font-size: 10px;
   }
 }

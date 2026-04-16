@@ -31,74 +31,74 @@
     <div id="sidebar">
       <h2>Ages</h2>
       <div class="input-group">
-        <label>Current age <span class="val" id="val-current_age"></span></label>
+        <label for="current_age">Current age <span class="val" id="val-current_age"></span></label>
         <input type="range" id="current_age" min="20" max="80" step="1">
       </div>
       <div class="input-group">
-        <label>Target retirement age <span class="val" id="val-retirement_age"></span></label>
+        <label for="retirement_age">Target retirement age <span class="val" id="val-retirement_age"></span></label>
         <input type="range" id="retirement_age" min="40" max="80" step="1">
       </div>
 
       <h2>Accounts (today's dollars)</h2>
       <div class="input-group">
-        <label>Pre-tax (401k/IRA)</label>
+        <label for="pretax_accounts">Pre-tax (401k/IRA) <span class="help" title="Traditional 401(k) and IRA balances. Withdrawals are taxed as ordinary income.">(?)</span></label>
         <input type="text" id="pretax_accounts" placeholder="$1,000,000">
       </div>
       <div class="input-group">
-        <label>Roth</label>
+        <label for="roth_accounts">Roth <span class="help" title="Roth 401(k) and Roth IRA balances. Contributions were after-tax; qualified withdrawals are tax-free.">(?)</span></label>
         <input type="text" id="roth_accounts" placeholder="$0">
       </div>
       <div class="input-group">
-        <label>Taxable brokerage</label>
+        <label for="taxable_accounts">Taxable brokerage <span class="help" title="Regular brokerage accounts. No contribution limits; withdrawals are not taxed as income (capital gains rules apply).">(?)</span></label>
         <input type="text" id="taxable_accounts" placeholder="$100,000">
       </div>
       <div class="input-group">
-        <label>Other assets</label>
+        <label for="other_assets">Other assets</label>
         <input type="text" id="other_assets" placeholder="$0">
       </div>
 
       <h2>Income &amp; Savings</h2>
       <div class="input-group">
-        <label>Annual income</label>
+        <label for="annual_income">Annual income</label>
         <input type="text" id="annual_income" placeholder="$120,000">
       </div>
       <div class="input-group">
-        <label>Pre-tax contribution ($/yr)</label>
+        <label for="pretax_contribution_dollars">Pre-tax contribution ($/yr) <span class="help" title="Annual contribution to your 401(k) / traditional IRA. Reduces taxable income now; taxed on withdrawal.">(?)</span></label>
         <input type="text" id="pretax_contribution_dollars" placeholder="$0">
       </div>
       <div class="input-group">
-        <label>Roth contribution ($/yr)</label>
+        <label for="roth_contribution_dollars">Roth contribution ($/yr) <span class="help" title="Annual contribution to your Roth 401(k) / Roth IRA. No tax deduction now; withdrawals in retirement are tax-free.">(?)</span></label>
         <input type="text" id="roth_contribution_dollars" placeholder="$0">
       </div>
       <div class="input-group">
-        <label>Taxable brokerage ($/yr)</label>
+        <label for="taxable_contribution_dollars">Taxable brokerage ($/yr) <span class="help" title="Annual contribution to a regular brokerage account, after maxing tax-advantaged accounts.">(?)</span></label>
         <input type="text" id="taxable_contribution_dollars" placeholder="$0">
       </div>
       <div id="savings-summary" class="savings-summary">
         Total savings: <span id="ss-total">—</span> <span id="ss-pct">(—)</span> of income
       </div>
       <div class="input-group">
-        <label>Salary growth <span class="val" id="val-salary_growth_rate"></span></label>
+        <label for="salary_growth_rate">Salary growth <span class="val" id="val-salary_growth_rate"></span></label>
         <input type="range" id="salary_growth_rate" min="0" max="0.10" step="0.005">
       </div>
 
       <h2>Returns &amp; Inflation</h2>
       <div class="input-group">
-        <label>Investment return <span class="val" id="val-investment_return_rate"></span></label>
+        <label for="investment_return_rate">Investment return <span class="val" id="val-investment_return_rate"></span></label>
         <input type="range" id="investment_return_rate" min="0" max="0.15" step="0.005">
       </div>
       <div class="input-group">
-        <label>Inflation <span class="val" id="val-inflation_rate"></span></label>
+        <label for="inflation_rate">Inflation <span class="val" id="val-inflation_rate"></span></label>
         <input type="range" id="inflation_rate" min="0" max="0.10" step="0.005">
       </div>
 
       <h2>Retirement Spending</h2>
       <div class="input-group">
-        <label>Desired spending (today's $)</label>
+        <label for="desired_spending_today_dollars">Desired spending (today's $)</label>
         <input type="text" id="desired_spending_today_dollars" placeholder="$80,000">
       </div>
       <div class="input-group">
-        <label>Healthcare bump (annual)</label>
+        <label for="healthcare_annual_bump">Healthcare bump (annual)</label>
         <input type="text" id="healthcare_annual_bump" placeholder="$5,000">
       </div>
 
@@ -120,17 +120,17 @@
 
       <h2>Social Security</h2>
       <div class="input-group">
-        <label>Monthly benefit (today's $)</label>
+        <label for="ss_monthly_benefit">Monthly benefit (today's $)</label>
         <input type="text" id="ss_monthly_benefit" placeholder="$2,000">
       </div>
       <div class="input-group">
-        <label>Claiming age <span class="val" id="val-ss_claiming_age"></span></label>
+        <label for="ss_claiming_age">Claiming age <span class="val" id="val-ss_claiming_age"></span></label>
         <input type="range" id="ss_claiming_age" min="62" max="70" step="1">
       </div>
 
       <h2>Tax &amp; Withdrawal</h2>
       <div class="input-group">
-        <label>Filing status</label>
+        <label for="filing_status">Filing status</label>
         <select id="filing_status">
           <option value="mfj">Married Filing Jointly</option>
           <option value="single">Single</option>
@@ -138,29 +138,29 @@
         </select>
       </div>
       <div class="input-group">
-        <label>Withdrawal strategy</label>
+        <label for="withdrawal_strategy">Withdrawal strategy <span class="help" title="Order in which account buckets are drawn down in retirement. Conventional preserves Roth for last; Roth-first maximizes tax-deferred growth; Proportional draws from all buckets simultaneously.">(?)</span></label>
         <select id="withdrawal_strategy">
           <option value="conventional">Conventional (taxable → pre-tax → Roth)</option>
           <option value="roth_first">Roth-first (Roth → pre-tax → taxable)</option>
-          <option value="proportional">Proportional</option>
+          <option value="proportional">Proportional (split across buckets)</option>
         </select>
       </div>
       <div class="checkbox-group">
         <input type="checkbox" id="model_rmds">
-        <label for="model_rmds">Model RMDs (age 73+)</label>
+        <label for="model_rmds" title="Required Minimum Distributions — the IRS requires minimum annual withdrawals from pre-tax accounts starting at age 73. Enabling this models excess RMDs being reinvested in taxable.">Model RMDs (age 73+)</label>
       </div>
       <div class="input-group">
-        <label>Safe withdrawal rate <span class="val" id="val-safe_withdrawal_rate"></span></label>
+        <label for="safe_withdrawal_rate">Safe withdrawal rate <span class="help" title="The percentage of your portfolio you withdraw annually in retirement. 4% is the traditional starting point from the Trinity study. Lower rates are more conservative.">(?)</span> <span class="val" id="val-safe_withdrawal_rate"></span></label>
         <input type="range" id="safe_withdrawal_rate" min="0.02" max="0.08" step="0.001">
       </div>
 
-      <h2>Monte Carlo</h2>
+      <h2 title="Runs simulations with randomized annual returns to show a range of possible outcomes across different market conditions.">Monte Carlo <span class="help" title="Runs simulations with randomized annual returns to show a range of possible outcomes across different market conditions.">(?)</span></h2>
       <div class="input-group">
-        <label>Simulations <span class="val" id="val-monte_carlo_simulations"></span></label>
+        <label for="monte_carlo_simulations">Simulations <span class="val" id="val-monte_carlo_simulations"></span></label>
         <input type="range" id="monte_carlo_simulations" min="100" max="2000" step="100">
       </div>
       <div class="input-group">
-        <label>Return volatility (std dev) <span class="val" id="val-monte_carlo_std"></span></label>
+        <label for="monte_carlo_std">Return volatility (std dev) <span class="val" id="val-monte_carlo_std"></span></label>
         <input type="range" id="monte_carlo_std" min="0.05" max="0.30" step="0.01">
       </div>
 
@@ -172,19 +172,20 @@
 
     <!-- Output panel -->
     <div id="output">
+      <div id="error-banner" class="error-banner" hidden role="alert"></div>
       <div id="banner" class="banner"></div>
 
       <!-- Metrics -->
       <div id="metrics">
-        <div class="metric-card">
+        <div class="metric-card" title="The portfolio size at which your annual withdrawals cover all retirement expenses. Financial Independence / Retire Early.">
           <div class="label">FIRE Number</div>
           <div class="value" id="m-fire-number">—</div>
         </div>
-        <div class="metric-card">
+        <div class="metric-card" title="The earliest age at which your projected portfolio reaches the FIRE number.">
           <div class="label">FIRE Age</div>
           <div class="value" id="m-fire-age">—</div>
         </div>
-        <div class="metric-card">
+        <div class="metric-card" title="The maximum annual spending your portfolio can sustain at your chosen safe withdrawal rate, after taxes.">
           <div class="label">Max Sustainable Spending</div>
           <div class="value" id="m-max-spending">—</div>
         </div>
@@ -192,7 +193,7 @@
           <div class="label">Portfolio at Retirement</div>
           <div class="value" id="m-portfolio-at-retirement">—</div>
         </div>
-        <div class="metric-card">
+        <div class="metric-card" title="The age at which the portfolio is projected to run out. A checkmark means it lasts to age 95, the end of the simulation.">
           <div class="label">Depletion Age</div>
           <div class="value" id="m-depletion-age">—</div>
         </div>
