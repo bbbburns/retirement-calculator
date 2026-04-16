@@ -48,9 +48,12 @@ function defaultInputs(name = 'Base Case') {
     other_assets: 0,
     annual_income: 120_000,
     annual_spending: 80_000,
-    savings_rate: 0.20,
-    pretax_contribution_rate: 0.70,
-    roth_contribution_rate: 0.20,
+    savings_rate: 0,
+    pretax_contribution_rate: 0,
+    roth_contribution_rate: 0,
+    pretax_contribution_dollars: 0,
+    roth_contribution_dollars: 0,
+    taxable_contribution_dollars: 0,
     investment_return_rate: 0.07,
     inflation_rate: 0.03,
     salary_growth_rate: 0.02,
@@ -84,6 +87,15 @@ function readInputs() {
   const sel = (id) => document.getElementById(id)?.value ?? '';
   const chk = (id) => document.getElementById(id)?.checked ?? false;
 
+  const income = tx('annual_income');
+  const pretax$ = tx('pretax_contribution_dollars');
+  const roth$ = tx('roth_contribution_dollars');
+  const taxable$ = tx('taxable_contribution_dollars');
+  const total$ = pretax$ + roth$ + taxable$;
+  const savingsRate = income > 0 ? Math.min(total$ / income, 1) : 0;
+  const pretaxFrac  = total$ > 0 ? pretax$ / total$ : 0;
+  const rothFrac    = total$ > 0 ? roth$   / total$ : 0;
+
   return {
     name: scenarios[activeIdx]?.name ?? 'Base Case',
     current_age: sl('current_age'),
@@ -92,11 +104,14 @@ function readInputs() {
     roth_accounts: tx('roth_accounts'),
     taxable_accounts: tx('taxable_accounts'),
     other_assets: tx('other_assets'),
-    annual_income: tx('annual_income'),
+    annual_income: income,
     annual_spending: 0, // not used directly
-    savings_rate: sl('savings_rate'),
-    pretax_contribution_rate: sl('pretax_contribution_rate'),
-    roth_contribution_rate: sl('roth_contribution_rate'),
+    savings_rate: savingsRate,
+    pretax_contribution_rate: pretaxFrac,
+    roth_contribution_rate: rothFrac,
+    pretax_contribution_dollars: pretax$,
+    roth_contribution_dollars: roth$,
+    taxable_contribution_dollars: taxable$,
     investment_return_rate: sl('investment_return_rate'),
     inflation_rate: sl('inflation_rate'),
     salary_growth_rate: sl('salary_growth_rate'),
@@ -146,9 +161,14 @@ function populateInputs(inp) {
   setDollar('taxable_accounts', inp.taxable_accounts);
   setDollar('other_assets', inp.other_assets);
   setDollar('annual_income', inp.annual_income);
-  setSlider('savings_rate', inp.savings_rate);
-  setSlider('pretax_contribution_rate', inp.pretax_contribution_rate);
-  setSlider('roth_contribution_rate', inp.roth_contribution_rate);
+  // Per-bucket dollar contributions. If the scenario predates this UI it
+  // won't have these fields — fall back to empty (forces user re-entry).
+  const hasDollars = inp.pretax_contribution_dollars !== undefined
+                  || inp.roth_contribution_dollars !== undefined
+                  || inp.taxable_contribution_dollars !== undefined;
+  setDollar('pretax_contribution_dollars',  hasDollars ? inp.pretax_contribution_dollars  : 0);
+  setDollar('roth_contribution_dollars',    hasDollars ? inp.roth_contribution_dollars    : 0);
+  setDollar('taxable_contribution_dollars', hasDollars ? inp.taxable_contribution_dollars : 0);
   setSlider('salary_growth_rate', inp.salary_growth_rate);
   setSlider('investment_return_rate', inp.investment_return_rate);
   setSlider('inflation_rate', inp.inflation_rate);
@@ -165,7 +185,7 @@ function populateInputs(inp) {
 
   renderOneTimeExpenses(inp.one_time_expenses ?? []);
   renderIncomeStreams(inp.retirement_income_streams ?? []);
-  updateContributionHint();
+  updateSavingsSummary();
   populating = false;
 }
 
@@ -174,7 +194,6 @@ function populateInputs(inp) {
 // ---------------------------------------------------------------------------
 
 const PCT_SLIDERS = new Set([
-  'savings_rate', 'pretax_contribution_rate', 'roth_contribution_rate',
   'salary_growth_rate', 'investment_return_rate', 'inflation_rate', 'safe_withdrawal_rate',
   'monte_carlo_std',
 ]);
@@ -192,32 +211,34 @@ function updateSliderLabel(id, val) {
 document.querySelectorAll('input[type="range"]').forEach(el => {
   el.addEventListener('input', () => {
     updateSliderLabel(el.id, el.value);
-    updateContributionHint();
     debouncedCalculate();
   });
 });
 
-function updateContributionHint() {
-  const pretax = parseFloat(document.getElementById('pretax_contribution_rate')?.value ?? 0);
-  const roth   = parseFloat(document.getElementById('roth_contribution_rate')?.value ?? 0);
-  const hint   = document.getElementById('contribution-hint');
-  if (!hint) return;
-  const total = (pretax + roth) * 100;
-  const taxable = Math.max(100 - total, 0);
-  if (total > 100) {
-    hint.textContent = `⚠ ${total.toFixed(0)}% allocated — capped at 100%, no taxable contribution`;
-    hint.className = 'contribution-hint over';
-  } else if (taxable > 0) {
-    hint.textContent = `Remaining ${taxable.toFixed(0)}% goes to taxable brokerage`;
-    hint.className = 'contribution-hint';
-  } else {
-    hint.textContent = '100% allocated — no taxable contribution';
-    hint.className = 'contribution-hint';
-  }
+const SAVINGS_INPUT_IDS = new Set([
+  'annual_income',
+  'pretax_contribution_dollars',
+  'roth_contribution_dollars',
+  'taxable_contribution_dollars',
+]);
+
+function updateSavingsSummary() {
+  const income = parseDollar(document.getElementById('annual_income')?.value);
+  const total  = parseDollar(document.getElementById('pretax_contribution_dollars')?.value)
+               + parseDollar(document.getElementById('roth_contribution_dollars')?.value)
+               + parseDollar(document.getElementById('taxable_contribution_dollars')?.value);
+  document.getElementById('ss-total').textContent = fmt$(total);
+  const pct = income > 0 ? (total / income * 100).toFixed(1) + '%' : '—';
+  document.getElementById('ss-pct').textContent = `(${pct})`;
+  const summary = document.getElementById('savings-summary');
+  summary.classList.toggle('over', income > 0 && total > income);
 }
 
 document.querySelectorAll('input[type="text"], select:not(#scenario-select)').forEach(el => {
-  el.addEventListener('input', () => debouncedCalculate());
+  el.addEventListener('input', () => {
+    if (SAVINGS_INPUT_IDS.has(el.id)) updateSavingsSummary();
+    debouncedCalculate();
+  });
   el.addEventListener('change', () => debouncedCalculate());
 });
 
@@ -353,6 +374,7 @@ async function calculate() {
   if (!populating) {
     scenarios[activeIdx].inputs = inputs;
     saveToStorage();
+    if (compareResults) { compareDirty = true; updateCompareStatus(); }
   }
   const outputEl = document.getElementById('output');
   outputEl.classList.add('is-loading');
@@ -600,8 +622,163 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     // Reflow Plotly on tab show
     if (btn.dataset.tab === 'nominal') Plotly.Plots.resize('chart-nominal');
     if (btn.dataset.tab === 'real') Plotly.Plots.resize('chart-real');
+    if (btn.dataset.tab === 'compare') renderCompareCheckboxes();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Scenario comparison
+// ---------------------------------------------------------------------------
+
+let compareResults = null; // { names: [], results: [] } — last comparison
+let compareDirty = false;
+
+function renderCompareCheckboxes() {
+  const box = document.getElementById('compare-checkboxes');
+  // Preserve any existing checkbox state by name
+  const checked = new Set();
+  box.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => checked.add(cb.value));
+  if (checked.size === 0) checked.add(scenarios[activeIdx].name);
+
+  box.innerHTML = '';
+  scenarios.forEach((s) => {
+    const id = 'cmp-' + s.name.replace(/\W+/g, '_');
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" id="${id}" value="${s.name.replace(/"/g, '&quot;')}" ${checked.has(s.name) ? 'checked' : ''}> ${s.name}`;
+    box.appendChild(label);
+  });
+  box.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', updateCompareButton);
+  });
+  updateCompareButton();
+  updateCompareStatus();
+}
+
+function getCheckedScenarioNames() {
+  return Array.from(document.querySelectorAll('#compare-checkboxes input[type="checkbox"]:checked'))
+    .map(cb => cb.value);
+}
+
+function updateCompareButton() {
+  document.getElementById('btn-compare').disabled = getCheckedScenarioNames().length < 2;
+}
+
+function updateCompareStatus() {
+  const status = document.getElementById('compare-status');
+  if (compareDirty && compareResults) {
+    status.textContent = 'Inputs changed since last run — click Compare to refresh.';
+    status.className = 'stale';
+  } else {
+    status.textContent = '';
+    status.className = '';
+  }
+}
+
+document.getElementById('btn-compare').addEventListener('click', runComparison);
+
+async function runComparison() {
+  const names = getCheckedScenarioNames();
+  if (names.length < 2) return;
+  const picked = names
+    .map(n => scenarios.find(s => s.name === n))
+    .filter(Boolean);
+
+  const btn = document.getElementById('btn-compare');
+  const status = document.getElementById('compare-status');
+  btn.disabled = true;
+  status.className = '';
+
+  const results = [];
+  for (let i = 0; i < picked.length; i++) {
+    status.textContent = `Computing ${i + 1}/${picked.length}…`;
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(picked[i].inputs),
+      });
+      if (!res.ok) {
+        status.textContent = `Error computing "${picked[i].name}"`;
+        btn.disabled = false;
+        return;
+      }
+      results.push(await res.json());
+    } catch (e) {
+      status.textContent = `Error: ${e.message}`;
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  compareResults = { names: picked.map(s => s.name), inputs: picked.map(s => s.inputs), results };
+  compareDirty = false;
+  status.textContent = '';
+  btn.disabled = false;
+  renderCompareTable(compareResults);
+}
+
+function totalLifetimeTaxes(result) {
+  return (result.annual_taxes_paid_nominal || []).reduce((a, b) => a + (b || 0), 0);
+}
+
+function renderCompareTable(c) {
+  const fmtAge = (a) => a == null ? '95+ ✓' : String(a);
+  const fmtFireAge = (a) => a == null ? 'Not reached' : String(a);
+
+  const rows = [
+    { label: 'FIRE Number', values: c.results.map(r => r.fire_number), fmt: fmt$, best: 'min' },
+    { label: 'FIRE Age', values: c.results.map(r => r.retirement_age_actual), fmt: fmtFireAge, best: 'min', skipNull: true },
+    { label: 'Portfolio at Retirement', values: c.results.map(r => r.portfolio_at_retirement), fmt: fmt$, best: 'max' },
+    { label: 'Max Sustainable Spending', values: c.results.map(r => r.max_sustainable_spending), fmt: fmt$, best: 'max' },
+    { label: 'Depletion Age', values: c.results.map(r => r.portfolio_depletion_age), fmt: fmtAge, best: 'max', nullIsBest: true },
+    { label: 'Total Lifetime Taxes', values: c.results.map(r => totalLifetimeTaxes(r)), fmt: fmt$, best: 'min' },
+  ];
+
+  let html = '<table class="compare-table"><thead><tr><th>Metric</th>';
+  c.names.forEach(n => { html += `<th>${escapeHtml(n)}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(row => {
+    const winnerIdx = pickWinner(row.values, row.best, row.nullIsBest);
+    html += `<tr><td>${row.label}</td>`;
+    row.values.forEach((v, i) => {
+      const cls = i === winnerIdx ? 'winner' : '';
+      const display = (row.skipNull && v == null) ? '—' : row.fmt(v);
+      html += `<td class="${cls}">${display}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('compare-result').innerHTML = html;
+}
+
+function pickWinner(values, mode, nullIsBest) {
+  let bestIdx = -1;
+  let bestVal = null;
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (v == null) {
+      if (nullIsBest) {
+        if (bestVal !== 'null') { bestIdx = i; bestVal = 'null'; }
+      }
+      continue;
+    }
+    if (bestVal === 'null') continue; // null already wins
+    if (bestVal == null) { bestIdx = i; bestVal = v; continue; }
+    if (mode === 'min' && v < bestVal) { bestIdx = i; bestVal = v; }
+    if (mode === 'max' && v > bestVal) { bestIdx = i; bestVal = v; }
+  }
+  // Don't highlight if all values are equal
+  const allEqual = values.every(v => v === values[0]);
+  return allEqual ? -1 : bestIdx;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 
 // ---------------------------------------------------------------------------
 // Scenario management (localStorage)
@@ -630,6 +807,10 @@ function populateScenarioSelect() {
   });
   sel.value = activeIdx;
   document.getElementById('btn-delete').disabled = scenarios.length <= 1;
+  // Keep compare checkboxes in sync with the scenario list
+  if (document.getElementById('tab-compare')?.classList.contains('active')) {
+    renderCompareCheckboxes();
+  }
 }
 
 document.getElementById('scenario-select').addEventListener('change', (e) => {
@@ -758,6 +939,97 @@ function deepClone(obj) {
 }
 
 // ---------------------------------------------------------------------------
+// Share via URL
+// ---------------------------------------------------------------------------
+
+const LIST_KEYS = new Set(['one_time_expenses', 'retirement_income_streams']);
+const BOOL_KEYS = new Set(['model_rmds', 'use_monte_carlo']);
+const STRING_KEYS = new Set(['name', 'filing_status', 'withdrawal_strategy']);
+
+function encodeScenarioToQuery(inputs) {
+  const defaults = defaultInputs();
+  const params = new URLSearchParams();
+  // Always include name (so receivers see the source label)
+  if (inputs.name) params.set('name', inputs.name);
+  for (const key of Object.keys(defaults)) {
+    if (key === 'name') continue;
+    const val = inputs[key];
+    const def = defaults[key];
+    if (LIST_KEYS.has(key)) {
+      if (Array.isArray(val) && val.length > 0) {
+        params.set(key, JSON.stringify(val));
+      }
+    } else if (BOOL_KEYS.has(key)) {
+      if (!!val !== !!def) params.set(key, val ? '1' : '0');
+    } else {
+      if (val !== def && val != null) params.set(key, String(val));
+    }
+  }
+  return `${location.origin}${location.pathname}?${params.toString()}`;
+}
+
+function decodeQueryToScenario() {
+  const params = new URLSearchParams(location.search);
+  if ([...params.keys()].length === 0) return null;
+  const defaults = defaultInputs();
+  const inputs = { ...defaults };
+  let touched = false;
+  for (const key of Object.keys(defaults)) {
+    if (!params.has(key)) continue;
+    const raw = params.get(key);
+    try {
+      if (LIST_KEYS.has(key)) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) inputs[key] = parsed;
+      } else if (BOOL_KEYS.has(key)) {
+        inputs[key] = raw === '1' || raw === 'true';
+      } else if (STRING_KEYS.has(key)) {
+        inputs[key] = raw;
+      } else {
+        const n = Number(raw);
+        if (!isNaN(n)) inputs[key] = n;
+      }
+      touched = true;
+    } catch (e) {
+      console.warn('Skipping bad share param', key, e);
+    }
+  }
+  if (!touched) return null;
+  const name = inputs.name || 'Shared Scenario';
+  return { name, inputs };
+}
+
+function importSharedScenarioIfPresent() {
+  const shared = decodeQueryToScenario();
+  if (!shared) return false;
+  const importName = uniqueName(`Shared: ${shared.name}`);
+  shared.inputs.name = importName;
+  scenarios.push({ name: importName, inputs: shared.inputs });
+  activeIdx = scenarios.length - 1;
+  saveToStorage();
+  history.replaceState({}, '', location.pathname);
+  return true;
+}
+
+document.getElementById('btn-share').addEventListener('click', async () => {
+  const url = encodeScenarioToQuery(scenarios[activeIdx].inputs);
+  const btn = document.getElementById('btn-share');
+  const restore = () => {
+    btn.textContent = 'Share';
+    btn.classList.remove('copied');
+  };
+  try {
+    await navigator.clipboard.writeText(url);
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(restore, 1500);
+  } catch (e) {
+    // Fallback: show URL in modal for manual copy
+    openModal('Copy this link', url, () => null);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Dark mode
 // ---------------------------------------------------------------------------
 
@@ -803,6 +1075,8 @@ function boot() {
     scenarios = [{ name: 'Base Case', inputs: defaultInputs('Base Case') }];
     activeIdx = 0;
   }
+
+  importSharedScenarioIfPresent();
 
   updateThemeButton();
   populateInputs(scenarios[activeIdx].inputs);

@@ -19,6 +19,7 @@
       <button id="btn-copy">Copy</button>
       <button id="btn-rename">Rename</button>
       <button id="btn-delete">Delete</button>
+      <button id="btn-share" title="Copy shareable link to clipboard">Share</button>
       <div style="flex:1"></div>
       <a href="how-it-works.html" id="how-it-works-link" target="_blank">How It Works</a>
       <button id="btn-theme" title="Toggle dark mode">☾</button>
@@ -62,18 +63,20 @@
         <input type="text" id="annual_income" placeholder="$120,000">
       </div>
       <div class="input-group">
-        <label>Savings rate <span class="val" id="val-savings_rate"></span></label>
-        <input type="range" id="savings_rate" min="0" max="0.80" step="0.01">
+        <label>Pre-tax contribution ($/yr)</label>
+        <input type="text" id="pretax_contribution_dollars" placeholder="$0">
       </div>
       <div class="input-group">
-        <label>Pre-tax contribution <span class="val" id="val-pretax_contribution_rate"></span></label>
-        <input type="range" id="pretax_contribution_rate" min="0" max="1" step="0.01">
+        <label>Roth contribution ($/yr)</label>
+        <input type="text" id="roth_contribution_dollars" placeholder="$0">
       </div>
       <div class="input-group">
-        <label>Roth contribution <span class="val" id="val-roth_contribution_rate"></span></label>
-        <input type="range" id="roth_contribution_rate" min="0" max="1" step="0.01">
+        <label>Taxable brokerage ($/yr)</label>
+        <input type="text" id="taxable_contribution_dollars" placeholder="$0">
       </div>
-      <div id="contribution-hint" class="contribution-hint"></div>
+      <div id="savings-summary" class="savings-summary">
+        Total savings: <span id="ss-total">—</span> <span id="ss-pct">(—)</span> of income
+      </div>
       <div class="input-group">
         <label>Salary growth <span class="val" id="val-salary_growth_rate"></span></label>
         <input type="range" id="salary_growth_rate" min="0" max="0.10" step="0.005">
@@ -206,6 +209,7 @@
         <button class="tab-btn active" data-tab="nominal">Wealth Curve</button>
         <button class="tab-btn" data-tab="real">Inflation-Adjusted</button>
         <button class="tab-btn" data-tab="table">Year-by-Year</button>
+        <button class="tab-btn" data-tab="compare">Compare</button>
       </div>
 
       <div class="tab-panel active" id="tab-nominal">
@@ -213,6 +217,17 @@
       </div>
       <div class="tab-panel" id="tab-real">
         <div id="chart-real"></div>
+      </div>
+      <div class="tab-panel" id="tab-compare">
+        <div id="compare-controls">
+          <div class="compare-help">Select two or more scenarios to compare side by side.</div>
+          <div id="compare-checkboxes"></div>
+          <div class="compare-actions">
+            <button id="btn-compare">Compare selected</button>
+            <span id="compare-status"></span>
+          </div>
+        </div>
+        <div id="compare-result"></div>
       </div>
       <div class="tab-panel" id="tab-table">
         <div id="table-container">

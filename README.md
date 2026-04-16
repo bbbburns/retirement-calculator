@@ -36,7 +36,9 @@ test/
 - **Dark mode** — ☾/☀︎ toggle in the top bar; preference stored in `localStorage` and synced across the main app and How It Works page. Theme is also applied on first load from `prefers-color-scheme`.
 - **Mobile layout** — at ≤700px the sidebar stacks above the output panel, the scenario bar collapses into two rows (selector on top, action buttons below), and metric cards wrap 2-up.
 - **Scenarios** — managed via the top bar dropdown. New, Copy, Rename, Delete. Auto-saved to `localStorage` on every recalculation.
-- **Contribution hint** — live text below the Roth contribution slider shows how savings are split across buckets; warns if pre-tax + Roth exceed 100%.
+- **Per-bucket contribution inputs** — pre-tax, Roth, and taxable brokerage are entered as direct dollar amounts. A read-only summary shows the derived total savings ($/yr and % of income) and warns if the total exceeds annual income.
+- **Compare tab** — pick two or more saved scenarios via checkboxes and run a side-by-side metrics table (FIRE #, FIRE age, portfolio at retirement, max sustainable spending, depletion age, total lifetime taxes). Winner per row is highlighted; goes stale when any input changes.
+- **Share via URL** — Share button copies a link encoding the active scenario's inputs as URL query params (with default values omitted). Opening the link imports it as a new "Shared: <name>" scenario and strips the query string so refresh doesn't re-import.
 - **Loading state** — metrics and chart fade while a recalculation is in-flight.
 - **Disclaimer** — "For planning purposes only — not financial advice" shown in the sidebar footer and on the How It Works page.
 

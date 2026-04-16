@@ -165,12 +165,18 @@
 <h2>Accumulation Phase</h2>
 <p>
   Starting from your current age and account balances, the model compounds each bucket by your
-  chosen investment return rate each year. Your annual savings contribution is split across
-  buckets according to the pre-tax and Roth contribution rate sliders; the remainder goes to
-  taxable.
+  chosen investment return rate each year. You enter your annual contributions to pre-tax,
+  Roth, and taxable brokerage accounts as direct dollar amounts; the calculator derives the
+  total savings rate and the per-bucket allocation fractions before running the simulation.
 </p>
-<div class="formula">portfolio(year+1) = portfolio(year) × (1 + return_rate)
-                  + annual_income × (1 + salary_growth)^year × savings_rate</div>
+<div class="formula">total_contribution = pretax_$ + roth_$ + taxable_$
+savings_rate       = min(total_contribution / annual_income, 1)
+portfolio(year+1)  = portfolio(year) × (1 + return_rate)
+                   + annual_income × (1 + salary_growth)^year × savings_rate</div>
+<p>
+  Each bucket grows by its own contribution share. If your contributions exceed your income
+  the savings rate clamps at 100% and the per-bucket fractions are scaled proportionally.
+</p>
 <p>
   Accumulation runs from your current age to your <em>target</em> retirement age. The chart always
   splits at the target — the FIRE age marker is shown separately if you could retire earlier.
