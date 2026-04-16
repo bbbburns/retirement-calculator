@@ -2,6 +2,8 @@
 
 A retirement planning calculator deployed as a Cloudflare Worker. Static frontend (vanilla JS + Plotly) backed by a stateless TypeScript API.
 
+Live at [https://retire.burns.sh](https://retire.burns.sh)
+
 ## Architecture
 
 ```
