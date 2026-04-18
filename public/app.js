@@ -453,10 +453,11 @@ function renderMetrics(result) {
   if (result.portfolio_depletion_age != null) {
     depEl.textContent = result.portfolio_depletion_age;
     depEl.className = 'value bad';
+    delete depEl.dataset.tip;
   } else {
     depEl.textContent = '95+ ✓';
     depEl.className = 'value good';
-    depEl.title = 'Portfolio lasted to age 95, the end of the simulation. It may last longer in reality.';
+    depEl.dataset.tip = 'Portfolio lasted to age 95, the end of the simulation. It may last longer in reality.';
   }
 }
 
@@ -1089,7 +1090,7 @@ function toggleTheme() {
 function updateThemeButton() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.getElementById('btn-theme').textContent = isDark ? '\u2600\uFE0E' : '☾';
-  document.getElementById('btn-theme').title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  document.getElementById('btn-theme').dataset.tip = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 }
 
 document.getElementById('btn-theme').addEventListener('click', toggleTheme);
@@ -1117,3 +1118,88 @@ function boot() {
 }
 
 boot();
+
+// ---------------------------------------------------------------------------
+// Tooltip system — shared floating bubble, 200ms hover delay, tap-to-toggle
+// ---------------------------------------------------------------------------
+
+(function () {
+  const SHOW_DELAY = 200;
+
+  const bubble = document.createElement('div');
+  bubble.id = 'tooltip-bubble';
+  document.body.appendChild(bubble);
+
+  let showTimer = null;
+  let tapEl = null;
+
+  function positionFor(el) {
+    const r = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // Center horizontally on element, clamped to viewport with 8px margin
+    const cx = r.left + r.width / 2;
+    const raw = cx - bubble.offsetWidth / 2;
+    const left = Math.max(8, Math.min(raw, vw - bubble.offsetWidth - 8));
+    bubble.style.left = left + 'px';
+    // Prefer above; fall back to below if not enough room
+    const spaceAbove = r.top;
+    const spaceBelow = vh - r.bottom;
+    if (spaceAbove >= bubble.offsetHeight + 12 || spaceAbove >= spaceBelow) {
+      bubble.style.top = (r.top - bubble.offsetHeight - 8) + 'px';
+    } else {
+      bubble.style.top = (r.bottom + 8) + 'px';
+    }
+  }
+
+  function show(el) {
+    bubble.textContent = el.dataset.tip;
+    positionFor(el);
+    bubble.style.opacity = '1';
+  }
+
+  function hide() {
+    bubble.style.opacity = '0';
+  }
+
+  // Hover: show after 200ms delay, hide immediately on mouse-leave
+  document.addEventListener('mouseover', function (e) {
+    const el = e.target.closest('[data-tip]');
+    if (!el || el === tapEl) return;
+    clearTimeout(showTimer);
+    showTimer = setTimeout(() => show(el), SHOW_DELAY);
+  });
+
+  document.addEventListener('mouseout', function (e) {
+    const el = e.target.closest('[data-tip]');
+    if (!el || el === tapEl) return;
+    clearTimeout(showTimer);
+    hide();
+  });
+
+  // Click/tap: toggle tooltip; prevent label from activating its input on .help spans
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-tip]');
+
+    if (!el) {
+      if (tapEl) { hide(); tapEl = null; }
+      return;
+    }
+
+    if (el.classList.contains('help')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    clearTimeout(showTimer);
+
+    if (tapEl === el) {
+      hide();
+      tapEl = null;
+    } else {
+      if (tapEl) hide();
+      tapEl = el;
+      show(el);
+    }
+  });
+}());

@@ -422,10 +422,33 @@ body {
 
 /* Help tooltip markers */
 .help {
+  display: inline-block;
+  position: relative;
   font-size: 0.82em;
   color: var(--text-muted);
   cursor: help;
   font-weight: normal;
+}
+
+/* Shared tooltip bubble — positioned via JS, escapes overflow containers */
+#tooltip-bubble {
+  position: fixed;
+  background: var(--text);
+  color: var(--bg);
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.45;
+  max-width: 260px;
+  word-wrap: break-word;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.12s ease;
 }
 
 /* Tabs */
