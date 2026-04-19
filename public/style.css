@@ -91,6 +91,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+a { color: var(--text-link); }
 
 body {
   font-family: system-ui, -apple-system, sans-serif;

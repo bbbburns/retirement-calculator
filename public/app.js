@@ -195,6 +195,7 @@ function populateInputs(inp) {
   renderIncomeStreams(inp.retirement_income_streams ?? []);
   updateSavingsSummary();
   populating = false;
+  updateEarlyRetirementNotice();
 }
 
 // ---------------------------------------------------------------------------
@@ -219,6 +220,7 @@ function updateSliderLabel(id, val) {
 document.querySelectorAll('input[type="range"]').forEach(el => {
   el.addEventListener('input', () => {
     updateSliderLabel(el.id, el.value);
+    if (el.id === 'retirement_age') updateEarlyRetirementNotice();
     debouncedCalculate();
   });
 });
@@ -458,6 +460,18 @@ function renderMetrics(result) {
     depEl.textContent = '95+ ✓';
     depEl.className = 'value good';
     depEl.dataset.tip = 'Portfolio lasted to age 95, the end of the simulation. It may last longer in reality.';
+  }
+}
+
+function updateEarlyRetirementNotice() {
+  const retAge = parseInt(document.getElementById('retirement_age').value, 10);
+  const el = document.getElementById('notice-early-retirement');
+  if (retAge < 60) {
+    el.className = 'banner warning';
+    el.innerHTML = `Retiring at ${retAge} — before age 59\u00bd, withdrawals from pre-tax accounts (401k/IRA) incur a 10% penalty not modeled here. Cover gap years with taxable or Roth funds, or see <a href="/how-it-works.html#early-withdrawal" target="_blank">How It Works</a>.`;
+  } else {
+    el.className = 'banner';
+    el.textContent = '';
   }
 }
 

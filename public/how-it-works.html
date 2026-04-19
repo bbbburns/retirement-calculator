@@ -36,6 +36,7 @@
       --code-bg:  #0f172a;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    a { color: var(--accent); }
     body {
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 15px;
@@ -381,8 +382,9 @@ retirement_income_real = amount / (1 + inflation)^(start_age − current_age)</d
   </tr>
 </table>
 
-<h2>Key Assumptions &amp; Limitations</h2>
+<h2 id="early-withdrawal">Key Assumptions &amp; Limitations</h2>
 <ul>
+  <li><strong>No early withdrawal penalty:</strong> Withdrawals from pre-tax accounts (401k, traditional IRA) before age 59½ normally incur a 10% IRS penalty on top of ordinary income tax. This calculator assumes penalty-free access to all accounts from the moment you retire, regardless of age. Early retirees can bridge the gap using taxable brokerage accounts, Roth contribution withdrawals (contributions — not earnings — are always penalty-free), a <a href="https://www.irs.gov/retirement-plans/substantially-equal-periodic-payments" target="_blank" rel="noopener">72(t) SEPP arrangement</a>, or a Roth conversion ladder (convert pre-tax funds to Roth each year, then withdraw penalty-free after a 5-year seasoning period).</li>
   <li><strong>Deterministic baseline:</strong> The main chart uses a single fixed return rate. Markets are not deterministic — use Monte Carlo for a range of outcomes.</li>
   <li><strong>No COLA on SS:</strong> Social Security benefits are not adjusted for inflation in this model, making SS slightly pessimistic over long horizons.</li>
   <li><strong>No state income tax:</strong> Only federal brackets are applied.</li>
