@@ -433,8 +433,8 @@ body {
 /* Shared tooltip bubble — positioned via JS, escapes overflow containers */
 #tooltip-bubble {
   position: fixed;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--text-body);
+  color: var(--bg-page);
   padding: 6px 10px;
   border-radius: 5px;
   font-size: 12px;
