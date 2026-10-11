@@ -50,14 +50,19 @@ test/
 npm install
 npm run dev        # wrangler dev — serves at http://localhost:8787
 npm test           # vitest (plain Node, no wrangler pool required)
-npx tsc --noEmit   # type-check
+npm run typecheck  # tsc --noEmit
 ```
 
 ## Deploy
 
-```bash
-wrangler deploy
-```
+Deploys are automatic. [Cloudflare Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) is connected to this repo (configured in the Cloudflare dashboard, not in this repo):
+
+- **Merge/push to `main`** → builds and deploys to production (retire.burns.sh).
+- **Other branches / PRs** → builds only, reported as the `Workers Builds: retirement-calculator` check; production is untouched.
+
+GitHub Actions (`.github/workflows/test.yml`) runs typecheck + tests separately and does not deploy.
+
+`npm run deploy` (`wrangler deploy`) still works for a manual deploy from your machine, but isn't needed in the normal flow.
 
 ## Calculation design
 
