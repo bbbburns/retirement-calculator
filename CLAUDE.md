@@ -1,7 +1,12 @@
 # retirement-calculator
 
-Cloudflare Worker (hono API + static frontend) deployed with `wrangler deploy`.
-Tests: `npm test` (vitest).
+Cloudflare Worker (hono API + static frontend).
+Tests: `npm test` (vitest). Typecheck: `npm run typecheck`.
+
+**Merging to `main` deploys to production** via Cloudflare Workers Builds
+(git integration set up in the Cloudflare dashboard, so nothing in the repo
+shows it). There is no manual deploy step; treat every merge as a release.
+Check the `Workers Builds: retirement-calculator` check run to confirm it.
 
 ## Returning to this project
 
