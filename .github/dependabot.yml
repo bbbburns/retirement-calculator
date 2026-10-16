@@ -10,7 +10,7 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      # Coupled tools move together, majors included (first match wins, so keep this first).
+      # Coupled tools move together, majors included.
       cloudflare-toolchain:
         applies-to: version-updates
         patterns:
@@ -19,11 +19,18 @@ updates:
           - "@vitest/*"
           - "@cloudflare/*"
       # Everything else: one PR for minor+patch; majors arrive as individual PRs.
+      # Dependabot picks the most specific group, not the first listed, and ranks
+      # update-types above wildcards, so exclude the toolchain here explicitly.
       minor-and-patch:
         applies-to: version-updates
         update-types:
           - minor
           - patch
+        exclude-patterns:
+          - "wrangler"
+          - "vitest"
+          - "@vitest/*"
+          - "@cloudflare/*"
       # One PR for security fixes instead of one per advisory.
       security:
         applies-to: security-updates
