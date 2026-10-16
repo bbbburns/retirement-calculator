@@ -16,6 +16,7 @@ updates:
         patterns:
           - "wrangler"
           - "vitest"
+          - "@vitest/*"
           - "@cloudflare/*"
       # Everything else: one PR for minor+patch; majors arrive as individual PRs.
       minor-and-patch:
