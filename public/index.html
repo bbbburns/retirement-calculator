@@ -31,6 +31,9 @@
       <button id="btn-rename">Rename</button>
       <button id="btn-delete">Delete</button>
       <button id="btn-share" data-tip="Copy shareable link to clipboard">Share</button>
+      <button id="btn-export" data-tip="Download all scenarios as a file">Export</button>
+      <button id="btn-import" data-tip="Add scenarios from an exported file">Import</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
       <div style="flex:1"></div>
       <a href="how-it-works.html" id="how-it-works-link" target="_blank">How It Works</a>
       <button id="btn-theme" data-tip="Toggle dark mode">☾</button>
@@ -280,6 +283,8 @@
     </div>
   </div>
 </div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script src="app.js"></script>
 </body>

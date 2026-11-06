@@ -161,6 +161,25 @@ body {
   color: #fff;
 }
 
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 8px 24px var(--shadow-modal);
+  z-index: 2000;
+  cursor: pointer;
+  display: none;
+}
+#toast.show { display: block; }
+#toast.error { background: #dc2626; }
+
 #btn-theme {
   font-size: 20px;
   width: 36px;

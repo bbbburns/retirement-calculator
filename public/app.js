@@ -1077,6 +1077,86 @@ document.getElementById('btn-share').addEventListener('click', async () => {
 });
 
 // ---------------------------------------------------------------------------
+// Export / import scenario files
+// ---------------------------------------------------------------------------
+
+let _toastTimer = null;
+
+function showToast(message, { error = false } = {}) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.toggle('error', error);
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), error ? 8000 : 4000);
+}
+
+document.getElementById('toast').addEventListener('click', (e) => {
+  e.currentTarget.classList.remove('show');
+});
+
+function loadScenarioFileModule() {
+  return import('./scenario-file.js');
+}
+
+document.getElementById('btn-export').addEventListener('click', async () => {
+  try {
+    const { buildExportFile, exportFileName } = await loadScenarioFileModule();
+    const now = new Date();
+    const json = JSON.stringify(buildExportFile(scenarios, now), null, 2) + '\n';
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = exportFileName(now);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    const n = scenarios.length;
+    showToast(`Exported ${n} scenario${n === 1 ? '' : 's'}.`);
+  } catch (e) {
+    console.error('Export failed', e);
+    showToast('Export failed. Please try again.', { error: true });
+  }
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', async (e) => {
+  const input = e.currentTarget;
+  const file = input.files?.[0];
+  input.value = ''; // allow re-importing the same file
+  if (!file) return;
+  try {
+    const mod = await loadScenarioFileModule();
+    if (file.size > mod.MAX_FILE_BYTES) {
+      throw new mod.ScenarioFileError('The file is too large (max 1 MB).');
+    }
+    const { scenarios: imported, skipped } = mod.parseScenarioFile(await file.text(), defaultInputs());
+    scenarios = mod.mergeScenarios(scenarios, imported);
+    activeIdx = scenarios.length - 1;
+    mcResult = null;
+    saveToStorage();
+    populateInputs(scenarios[activeIdx].inputs);
+    populateScenarioSelect();
+    calculate();
+    const n = imported.length;
+    let msg = `Imported ${n} scenario${n === 1 ? '' : 's'}`;
+    if (skipped) msg += ` (${skipped} skipped)`;
+    showToast(msg + '.');
+  } catch (err) {
+    if (err?.name === 'ScenarioFileError') {
+      showToast(`Import failed: ${err.message}`, { error: true });
+    } else {
+      console.error('Import failed', err);
+      showToast('Import failed: the file could not be read.', { error: true });
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Dark mode
 // ---------------------------------------------------------------------------
 
