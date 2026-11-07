@@ -161,6 +161,61 @@ body {
   color: #fff;
 }
 
+#import-dialog {
+  margin: auto;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  color: var(--text-body);
+  box-shadow: 0 20px 60px var(--shadow-modal);
+}
+#import-dialog::backdrop { background: var(--overlay-bg); }
+#import-dialog h3 { font-size: 16px; margin-bottom: 8px; color: var(--text-value); }
+#import-dialog p { font-size: 13px; margin-bottom: 8px; color: var(--text-label); }
+#import-dialog ul {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin: 0 0 16px;
+  padding: 8px 8px 8px 24px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-ris-item);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#import-dialog .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+#import-dialog .modal-actions button {
+  padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  border: 1px solid var(--border-input);
+  background: var(--bg-input); color: var(--text-body);
+}
+#import-dialog .modal-actions button.primary {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 8px 24px var(--shadow-modal);
+  z-index: 2000;
+  cursor: pointer;
+  display: none;
+}
+#toast.show { display: block; }
+#toast.error { background: #dc2626; }
+
 #btn-theme {
   font-size: 20px;
   width: 36px;

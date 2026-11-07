@@ -382,6 +382,17 @@ retirement_income_real = amount / (1 + inflation)^(start_age − current_age)</d
   </tr>
 </table>
 
+<h2 id="saving-scenarios">Saving &amp; Moving Your Scenarios</h2>
+<p>
+  Scenarios are saved only in this browser's local storage — nothing is stored on the server.
+  Clearing site data or switching browsers or devices starts you over with the default Base Case.
+</p>
+<ul>
+  <li><strong>Export</strong> downloads all your scenarios as a JSON file (<code>retirement-scenarios-YYYY-MM-DD.json</code>). Keep it as a backup or copy it to another device.</li>
+  <li><strong>Import</strong> adds the scenarios from an exported file to the ones you already have. Nothing is overwritten: if a name is already taken, the imported copy gets a number added (for example "Base Case 2"). If the file has problems — unknown or misspelled fields, values of the wrong type, values outside what the sliders allow, or missing fields — they are listed before anything is imported, so you can import anyway or cancel.</li>
+  <li><strong>Share</strong> copies a link to the selected scenario, which is handy for sending a single scenario to someone else.</li>
+</ul>
+
 <h2 id="early-withdrawal">Key Assumptions &amp; Limitations</h2>
 <ul>
   <li><strong>No early withdrawal penalty:</strong> Withdrawals from pre-tax accounts (401k, traditional IRA) before age 59½ normally incur a 10% IRS penalty on top of ordinary income tax. This calculator assumes penalty-free access to all accounts from the moment you retire, regardless of age. Early retirees can bridge the gap using taxable brokerage accounts, Roth contribution withdrawals (contributions — not earnings — are always penalty-free), a <a href="https://www.irs.gov/retirement-plans/substantially-equal-periodic-payments" target="_blank" rel="noopener">72(t) SEPP arrangement</a>, or a Roth conversion ladder (convert pre-tax funds to Roth each year, then withdraw penalty-free after a 5-year seasoning period).</li>

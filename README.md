@@ -22,16 +22,19 @@ src/
 public/
   index.html        Single-page UI
   app.js            Input reading, debounced API calls, Plotly rendering, localStorage scenarios
+  scenario-file.js  Scenario export/import: file format, validation, merge (ES module, loaded on demand)
+  input-limits.js   Input ranges shared by the API and the browser
   style.css         Layout and component styles (desktop + mobile ≤700px)
   how-it-works.html Standalone page documenting all calculation assumptions
 test/
   calc.test.ts      Unit tests: tax, RMD, accumulation, FIRE number, drawdown, end-to-end
   api.test.ts       Integration tests via Hono app.request()
+  scenario-file.test.ts  Export/import parsing, issue reporting, merge; slider ranges vs API limits
 ```
 
 **Request flow:** sliders → `app.js` (300ms debounce) → `POST /api/calculate` → Worker computes `ScenarioResult` → Plotly chart + metrics table + year-by-year table.
 
-**No database.** Scenarios are stored in `localStorage`. The Worker is fully stateless.
+**No database.** Scenarios are stored in `localStorage` (back them up or move them with Export / Import). The Worker is fully stateless.
 
 ## UI notes
 
@@ -41,6 +44,8 @@ test/
 - **Per-bucket contribution inputs** — pre-tax, Roth, and taxable brokerage are entered as direct dollar amounts. A read-only summary shows the derived total savings ($/yr and % of income) and warns if the total exceeds annual income.
 - **Compare tab** — pick two or more saved scenarios via checkboxes and run a side-by-side metrics table (FIRE #, FIRE age, portfolio at retirement, max sustainable spending, depletion age, total lifetime taxes). Winner per row is highlighted; goes stale when any input changes.
 - **Share via URL** — Share button copies a link encoding the active scenario's inputs as URL query params (with default values omitted). Opening the link imports it as a new "Shared: <name>" scenario and strips the query string so refresh doesn't re-import.
+- **Export / Import** — Export downloads every scenario as `retirement-scenarios-YYYY-MM-DD.json` (`{format: "retirement-calculator-scenarios", version: 1, exported_at, scenarios: [{name, inputs}]}`). Import appends the file's scenarios; nothing existing is overwritten, and name clashes get a numeric suffix. Files that are not JSON, have the wrong `format`, a newer `version`, more than 100 scenarios, more than 1 MB, or no usable scenario are rejected. Otherwise import is lenient but never silent: unknown fields (with "did you mean" hints), wrong-type values replaced by defaults, values clamped or rounded to what the sliders and dollar boxes allow, missing fields, dropped list items and skipped scenarios are all listed in a confirm dialog (**Import anyway** / **Cancel**) before anything is saved. Parsing lives in `public/scenario-file.js`, a dependency-free ES module that `app.js` loads with `import()` and the tests import directly.
+- **Shared input limits** — `public/input-limits.js` holds the numeric ranges, enum values and list limits. `src/validate.ts` (API clamping) and the import check both use it; it lives in `public/` so the browser can load it, and the Worker bundles it. Slider ranges in `index.html` may be narrower but must stay inside it (enforced by a test).
 - **Loading state** — metrics and chart fade while a recalculation is in-flight.
 - **Disclaimer** — "For planning purposes only — not financial advice" shown in the sidebar footer and on the How It Works page.
 
@@ -123,7 +128,7 @@ Year-by-year p10/p50/p90 percentiles are computed by sorting per-year values acr
 npx vitest run
 ```
 
-31 tests across two files:
+67 tests across three files:
 
 | Area | Tests |
 |---|---|
@@ -134,6 +139,7 @@ npx vitest run
 | Drawdown | 1 |
 | End-to-end (runScenario) | 4 |
 | API integration | 9 |
+| Scenario export/import, UI limits | 36 |
 
 ## License
 

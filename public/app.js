@@ -295,11 +295,14 @@ function addOneTimeExpenseRow(item, _idx) {
   const row = document.createElement('div');
   row.className = 'list-item';
   row.innerHTML = `
-    <input type="number" placeholder="Age" value="${item.age}" min="20" max="120" step="1" aria-label="Expense age" style="max-width:40px">
+    <input type="number" placeholder="Age" min="20" max="120" step="1" aria-label="Expense age" style="max-width:40px">
     <input type="text" placeholder="Amount" inputmode="numeric" aria-label="Expense amount">
     <input type="text" placeholder="Label" aria-label="Expense label">
     <button onclick="this.closest('.list-item').remove(); debouncedCalculate();" aria-label="Remove expense">&times;</button>
   `;
+  // Set values via .value, never by interpolating into the innerHTML above:
+  // items can come from share links and imported files.
+  row.querySelectorAll('input')[0].value = item.age ?? '';
   row.querySelectorAll('input')[1].value = item.amount ? Math.round(item.amount).toLocaleString() : '';
   row.querySelectorAll('input')[2].value = item.label || '';
   container.appendChild(row);
@@ -1073,6 +1076,129 @@ document.getElementById('btn-share').addEventListener('click', async () => {
   } catch (e) {
     // Fallback: show URL in modal pre-selected for manual copy (Ctrl+C / Cmd+C)
     openModal('Copy this link (Ctrl+C / Cmd+C)', url, () => null);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Export / import scenario files
+// ---------------------------------------------------------------------------
+
+let _toastTimer = null;
+
+function showToast(message, { error = false } = {}) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.toggle('error', error);
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), error ? 8000 : 4000);
+}
+
+document.getElementById('toast').addEventListener('click', (e) => {
+  e.currentTarget.classList.remove('show');
+});
+
+function loadScenarioFileModule() {
+  return import('./scenario-file.js');
+}
+
+document.getElementById('btn-export').addEventListener('click', async () => {
+  try {
+    const { buildExportFile, exportFileName } = await loadScenarioFileModule();
+    const now = new Date();
+    const json = JSON.stringify(buildExportFile(scenarios, now), null, 2) + '\n';
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = exportFileName(now);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    const n = scenarios.length;
+    showToast(`Exported ${n} scenario${n === 1 ? '' : 's'}.`);
+  } catch (e) {
+    console.error('Export failed', e);
+    showToast('Export failed. Please try again.', { error: true });
+  }
+});
+
+// What the UI enforces on numeric fields, so import can report values that
+// would be clamped or rounded when the scenario is loaded: each slider's range
+// and step, and whole dollars for the dollar text boxes (see setDollar).
+function uiRanges() {
+  const ranges = {};
+  document.querySelectorAll('input[type="range"]').forEach(el => {
+    ranges[el.id] = { min: Number(el.min), max: Number(el.max), step: Number(el.step) };
+  });
+  const defaults = defaultInputs();
+  document.querySelectorAll('input[type="text"]').forEach(el => {
+    if (typeof defaults[el.id] === 'number') ranges[el.id] = { step: 1 };
+  });
+  return ranges;
+}
+
+// Show the problems found in an import file; resolves true to import anyway.
+function confirmImport(fileName, count, skipped, messages) {
+  const dialog = document.getElementById('import-dialog');
+  document.getElementById('import-dialog-title').textContent = `Problems found in ${fileName}`;
+  const s = n => (n === 1 ? '' : 's');
+  let summary = `${count} scenario${s(count)} can be imported`;
+  if (skipped) summary += ` and ${skipped} will be skipped`;
+  summary += `. ${messages.length} problem${s(messages.length)}:`;
+  document.getElementById('import-dialog-summary').textContent = summary;
+  const list = document.getElementById('import-dialog-issues');
+  list.replaceChildren(...messages.map(m => {
+    const li = document.createElement('li');
+    li.textContent = m;
+    return li;
+  }));
+  dialog.returnValue = '';
+  dialog.showModal();
+  list.scrollTop = 0;
+  return new Promise(resolve => {
+    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'import'), { once: true });
+  });
+}
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', async (e) => {
+  const input = e.currentTarget;
+  const file = input.files?.[0];
+  input.value = ''; // allow re-importing the same file
+  if (!file) return;
+  try {
+    const mod = await loadScenarioFileModule();
+    if (file.size > mod.MAX_FILE_BYTES) {
+      throw new mod.ScenarioFileError('The file is too large (max 1 MB).');
+    }
+    const { scenarios: imported, skipped, issues } = mod.parseScenarioFile(
+      await file.text(), defaultInputs(), { ranges: uiRanges() });
+    if (issues.length && !(await confirmImport(file.name, imported.length, skipped, issues.map(mod.formatIssue)))) {
+      showToast('Import cancelled. Nothing was changed.');
+      return;
+    }
+    scenarios = mod.mergeScenarios(scenarios, imported);
+    activeIdx = scenarios.length - 1;
+    mcResult = null;
+    saveToStorage();
+    populateInputs(scenarios[activeIdx].inputs);
+    populateScenarioSelect();
+    calculate();
+    const n = imported.length;
+    let msg = `Imported ${n} scenario${n === 1 ? '' : 's'}`;
+    if (skipped) msg += ` (${skipped} skipped)`;
+    showToast(msg + '.');
+  } catch (err) {
+    if (err?.name === 'ScenarioFileError') {
+      showToast(`Import failed: ${err.message}`, { error: true });
+    } else {
+      console.error('Import failed', err);
+      showToast('Import failed: the file could not be read.', { error: true });
+    }
   }
 });
 
