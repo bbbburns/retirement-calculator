@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import indexHtml from '../public/index.html?raw';
+import appJs from '../public/app.js?raw';
 import { NUMBER_LIMITS } from '../public/input-limits.js';
 import {
   FILE_FORMAT,
@@ -367,5 +368,13 @@ describe('UI limits', () => {
       expect(Number(max), `${id} max`).toBeLessThanOrEqual(lim.max);
       if (lim.integer) expect(Number.isInteger(Number(step)), `${id} step`).toBe(true);
     }
+  });
+});
+
+describe('app.js HTML templates', () => {
+  // Scenario data can come from share links and imported files. Values must be
+  // set with .value / textContent, not interpolated into an HTML attribute.
+  it('does not interpolate values into HTML attributes', () => {
+    expect(appJs).not.toMatch(/value="\$\{(?!escapeHtml\()/);
   });
 });

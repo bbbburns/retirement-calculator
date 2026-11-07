@@ -295,11 +295,14 @@ function addOneTimeExpenseRow(item, _idx) {
   const row = document.createElement('div');
   row.className = 'list-item';
   row.innerHTML = `
-    <input type="number" placeholder="Age" value="${item.age}" min="20" max="120" step="1" aria-label="Expense age" style="max-width:40px">
+    <input type="number" placeholder="Age" min="20" max="120" step="1" aria-label="Expense age" style="max-width:40px">
     <input type="text" placeholder="Amount" inputmode="numeric" aria-label="Expense amount">
     <input type="text" placeholder="Label" aria-label="Expense label">
     <button onclick="this.closest('.list-item').remove(); debouncedCalculate();" aria-label="Remove expense">&times;</button>
   `;
+  // Set values via .value, never by interpolating into the innerHTML above:
+  // items can come from share links and imported files.
+  row.querySelectorAll('input')[0].value = item.age ?? '';
   row.querySelectorAll('input')[1].value = item.amount ? Math.round(item.amount).toLocaleString() : '';
   row.querySelectorAll('input')[2].value = item.label || '';
   container.appendChild(row);
