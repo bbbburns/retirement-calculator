@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import indexHtml from '../public/index.html?raw';
+import { NUMBER_LIMITS } from '../public/input-limits.js';
 import {
   FILE_FORMAT,
   FILE_VERSION,
   MAX_SCENARIOS,
   ScenarioFileError,
   buildExportFile,
+  formatIssue,
   exportFileName,
   mergeScenarios,
   parseScenarioFile,
@@ -20,6 +23,7 @@ function defaults(name = 'Base Case') {
     retirement_age: 65,
     pretax_accounts: 100_000,
     annual_income: 80_000,
+    pretax_contribution_dollars: 0,
     investment_return_rate: 0.07,
     one_time_expenses: [] as unknown[],
     retirement_income_streams: [] as unknown[],
@@ -212,5 +216,156 @@ describe('mergeScenarios', () => {
     const merged = mergeScenarios([{ name: long, inputs: defaults(long) }], [{ name: long, inputs: defaults(long) }]);
     expect(merged[1].name.length).toBeLessThanOrEqual(100);
     expect(merged[1].name).not.toBe(long);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Issue reporting
+// ---------------------------------------------------------------------------
+
+// What app.js passes for the fixture fields above (slider ranges from index.html).
+const UI_RANGES = {
+  current_age: { min: 20, max: 80, step: 1 },
+  retirement_age: { min: 40, max: 80, step: 1 },
+  investment_return_rate: { min: 0, max: 0.15, step: 0.005 },
+  pretax_accounts: { step: 1 },
+  annual_income: { step: 1 },
+  pretax_contribution_dollars: { step: 1 },
+};
+
+function messages(scenarios: unknown[], extra: Record<string, unknown> = {}) {
+  return parseScenarioFile(fileText(scenarios, extra), defaults(), { ranges: UI_RANGES }).issues.map(formatIssue);
+}
+
+function one(inputs: Record<string, unknown>) {
+  return messages([{ name: 'S', inputs: { ...defaults('S'), ...inputs } }]);
+}
+
+describe('parseScenarioFile reports issues', () => {
+  it('reports nothing for a clean export', () => {
+    const scenarios = [
+      { name: 'A', inputs: { ...defaults('A'), investment_return_rate: 0.065, one_time_expenses: [{ age: 70, amount: 5000, label: 'Car' }] } },
+      { name: 'B', inputs: defaults('B') },
+    ];
+    expect(parseScenarioFile(JSON.stringify(buildExportFile(scenarios)), defaults(), { ranges: UI_RANGES }).issues).toEqual([]);
+  });
+
+  it('reports unknown fields, suggesting close matches', () => {
+    expect(one({ retirment_age: 60, zzz: 1 })).toEqual([
+      'S: unknown field "retirment_age" ignored (did you mean "retirement_age"?)',
+      'S: unknown field "zzz" ignored',
+    ]);
+  });
+
+  it('reports unknown fields at file and scenario level', () => {
+    expect(messages([{ name: 'S', inputs: defaults('S'), note: 'x' }], { comment: 'hi' })).toEqual([
+      'File: unknown field "comment" ignored',
+      'S: unknown field "note" ignored (did you mean "name"?)',
+    ]);
+  });
+
+  it('reports wrong types and the default used', () => {
+    expect(one({ current_age: 'fifty', model_rmds: 'yes', filing_status: 'married' })).toEqual([
+      'S: current_age "fifty" is not a number; default 45 used',
+      'S: filing_status "married" is not one of mfj, single, hoh; default "mfj" used',
+      'S: model_rmds "yes" is not true or false; default true used',
+    ]);
+  });
+
+  it('clamps to the slider range where there is one, else to the API limits', () => {
+    expect(one({ current_age: 85, pretax_accounts: -5 })).toEqual([
+      'S: current_age 85 is above the maximum 80; set to 80',
+      'S: pretax_accounts -5 is below the minimum 0; set to 0',
+      'S: retirement_age 65 is below current_age 80; set to 80',
+    ]);
+    const { scenarios, issues } = parseScenarioFile(
+      fileText([{ name: 'S', inputs: { current_age: 85 } }]), defaults());
+    expect(scenarios[0].inputs.current_age).toBe(85);
+    expect(issues.map(formatIssue)).not.toContain(expect.stringContaining('current_age 85'));
+  });
+
+  it('reports rounding to the slider step and to whole dollars', () => {
+    const issues = one({ investment_return_rate: 0.0725, current_age: 45.4, annual_income: 80_000.6 });
+    expect(issues).toEqual([
+      'S: current_age 45.4 rounded to 45',
+      'S: annual_income 80000.6 rounded to 80001',
+      'S: investment_return_rate 0.0725 rounded to 0.075 (steps of 0.005)',
+    ]);
+  });
+
+  it('applies the cleaned values', () => {
+    const { scenarios } = parseScenarioFile(
+      fileText([{ name: 'S', inputs: { current_age: 85, investment_return_rate: 0.0725 } }]),
+      defaults(), { ranges: UI_RANGES });
+    expect(scenarios[0].inputs.current_age).toBe(80);
+    expect(scenarios[0].inputs.investment_return_rate).toBe(0.075);
+  });
+
+  it('raises retirement_age to current_age', () => {
+    expect(one({ current_age: 60, retirement_age: 50 })).toEqual([
+      'S: retirement_age 50 is below current_age 60; set to 60',
+    ]);
+  });
+
+  it('reports missing fields on one line', () => {
+    expect(messages([{ name: 'S', inputs: { current_age: 50, retirement_age: 60 } }])).toEqual([
+      'S: 10 fields missing; defaults used (pretax_accounts, annual_income, pretax_contribution_dollars, '
+        + 'investment_return_rate, one_time_expenses, retirement_income_streams, filing_status, '
+        + 'withdrawal_strategy, model_rmds, use_monte_carlo)',
+    ]);
+  });
+
+  it('reports list item problems', () => {
+    expect(one({
+      one_time_expenses: [
+        { age: 70, amount: 5000, label: 'Car', extra: true },
+        { age: 'x', amount: 1, label: 'bad' },
+        7,
+        { age: 130, amount: 100 },
+      ],
+      retirement_income_streams: {},
+    })).toEqual([
+      'S: one_time_expenses item 1: unknown field "extra" ignored',
+      'S: one_time_expenses item 2 dropped (age "x" is not a number)',
+      'S: one_time_expenses item 3 dropped (not an object: 7)',
+      'S: one_time_expenses item 4: age 130 is above the maximum 120; set to 120',
+      'S: one_time_expenses item 4: label missing; left blank',
+      'S: retirement_income_streams {} is not a list; default used (empty)',
+    ]);
+  });
+
+  it('reports lists over the item limit', () => {
+    const items = Array.from({ length: 55 }, (_, i) => ({ age: 70, amount: i + 1, label: `E${i}` }));
+    const { scenarios, issues } = parseScenarioFile(
+      fileText([{ name: 'S', inputs: { ...defaults('S'), one_time_expenses: items } }]), defaults(), { ranges: UI_RANGES });
+    expect(scenarios[0].inputs.one_time_expenses).toHaveLength(50);
+    expect(issues.map(formatIssue)).toEqual(['S: one_time_expenses has 55 items; only the first 50 kept']);
+  });
+
+  it('reports name changes and skipped scenarios', () => {
+    expect(messages([
+      { name: 'a/b', inputs: defaults() },
+      { inputs: defaults() },
+      { name: 'Empty', inputs: { bogus: 1 } },
+      'nope',
+    ])).toEqual([
+      'a_b: name "a/b" changed to "a_b"',
+      'Empty: skipped (no usable fields)',
+      'Scenario 4: skipped (not an object: "nope")',
+    ]);
+  });
+});
+
+describe('UI limits', () => {
+  it('keeps every slider inside the API limits', () => {
+    const sliders = [...indexHtml.matchAll(/<input type="range" id="(\w+)" min="([^"]+)" max="([^"]+)" step="([^"]+)"/g)];
+    expect(sliders.length).toBeGreaterThan(5);
+    for (const [, id, min, max, step] of sliders) {
+      const lim = (NUMBER_LIMITS as Record<string, { min: number; max: number; integer: boolean }>)[id];
+      expect(lim, `${id} has no API limit`).toBeDefined();
+      expect(Number(min), `${id} min`).toBeGreaterThanOrEqual(lim.min);
+      expect(Number(max), `${id} max`).toBeLessThanOrEqual(lim.max);
+      if (lim.integer) expect(Number.isInteger(Number(step)), `${id} step`).toBe(true);
+    }
   });
 });

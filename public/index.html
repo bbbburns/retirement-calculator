@@ -284,6 +284,18 @@
   </div>
 </div>
 
+<dialog id="import-dialog" aria-labelledby="import-dialog-title">
+  <form method="dialog">
+    <h3 id="import-dialog-title">Problems found in file</h3>
+    <p id="import-dialog-summary"></p>
+    <ul id="import-dialog-issues"></ul>
+    <div class="modal-actions">
+      <button value="cancel" autofocus>Cancel</button>
+      <button value="import" class="primary">Import anyway</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="app.js"></script>

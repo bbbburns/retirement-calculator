@@ -1120,6 +1120,44 @@ document.getElementById('btn-export').addEventListener('click', async () => {
   }
 });
 
+// What the UI enforces on numeric fields, so import can report values that
+// would be clamped or rounded when the scenario is loaded: each slider's range
+// and step, and whole dollars for the dollar text boxes (see setDollar).
+function uiRanges() {
+  const ranges = {};
+  document.querySelectorAll('input[type="range"]').forEach(el => {
+    ranges[el.id] = { min: Number(el.min), max: Number(el.max), step: Number(el.step) };
+  });
+  const defaults = defaultInputs();
+  document.querySelectorAll('input[type="text"]').forEach(el => {
+    if (typeof defaults[el.id] === 'number') ranges[el.id] = { step: 1 };
+  });
+  return ranges;
+}
+
+// Show the problems found in an import file; resolves true to import anyway.
+function confirmImport(fileName, count, skipped, messages) {
+  const dialog = document.getElementById('import-dialog');
+  document.getElementById('import-dialog-title').textContent = `Problems found in ${fileName}`;
+  const s = n => (n === 1 ? '' : 's');
+  let summary = `${count} scenario${s(count)} can be imported`;
+  if (skipped) summary += ` and ${skipped} will be skipped`;
+  summary += `. ${messages.length} problem${s(messages.length)}:`;
+  document.getElementById('import-dialog-summary').textContent = summary;
+  const list = document.getElementById('import-dialog-issues');
+  list.replaceChildren(...messages.map(m => {
+    const li = document.createElement('li');
+    li.textContent = m;
+    return li;
+  }));
+  dialog.returnValue = '';
+  dialog.showModal();
+  list.scrollTop = 0;
+  return new Promise(resolve => {
+    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'import'), { once: true });
+  });
+}
+
 document.getElementById('btn-import').addEventListener('click', () => {
   document.getElementById('import-file').click();
 });
@@ -1134,7 +1172,12 @@ document.getElementById('import-file').addEventListener('change', async (e) => {
     if (file.size > mod.MAX_FILE_BYTES) {
       throw new mod.ScenarioFileError('The file is too large (max 1 MB).');
     }
-    const { scenarios: imported, skipped } = mod.parseScenarioFile(await file.text(), defaultInputs());
+    const { scenarios: imported, skipped, issues } = mod.parseScenarioFile(
+      await file.text(), defaultInputs(), { ranges: uiRanges() });
+    if (issues.length && !(await confirmImport(file.name, imported.length, skipped, issues.map(mod.formatIssue)))) {
+      showToast('Import cancelled. Nothing was changed.');
+      return;
+    }
     scenarios = mod.mergeScenarios(scenarios, imported);
     activeIdx = scenarios.length - 1;
     mcResult = null;
